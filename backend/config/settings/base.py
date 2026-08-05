@@ -74,6 +74,7 @@ LOCAL_APPS = [
     "apps.common.apps.CommonConfig",
     "apps.core.apps.CoreConfig",
     "apps.authentication.apps.AuthenticationConfig",
+    "apps.rbac.apps.RbacConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -95,6 +96,7 @@ MIDDLEWARE = [
     # PharmaCloud custom middleware
     "apps.common.middleware.request_context.RequestContextMiddleware",
     "apps.common.middleware.tenant.TenantIdentificationMiddleware",
+    "apps.rbac.middleware.PermissionContextMiddleware",
 ]
 
 # ---------------------------------------------------------------------------
@@ -310,6 +312,36 @@ AUTH_SMS_BACKEND = env.str("AUTH_SMS_BACKEND", default="")
 AUTH_THROTTLE_WINDOW_SECONDS = env.int("AUTH_THROTTLE_WINDOW_SECONDS", default=300)
 
 # ---------------------------------------------------------------------------
+# RBAC (apps.rbac)
+# ---------------------------------------------------------------------------
+# Superusers short-circuit every permission check (platform support bypass).
+RBAC_SUPERADMIN_BYPASS = env.bool("RBAC_SUPERADMIN_BYPASS", default=True)
+
+# Effective-permission cache TTL (seconds). Correctness is guaranteed by the
+# global version counter, so TTL only bounds cache growth.
+RBAC_CACHE_TTL_SECONDS = env.int("RBAC_CACHE_TTL_SECONDS", default=300)
+
+# Prevent an actor from granting a role whose granted permissions exceed the
+# actor's own effective permissions.
+RBAC_ENFORCE_ESCALATION_GUARD = env.bool("RBAC_ENFORCE_ESCALATION_GUARD", default=True)
+
+# How many role version snapshots are retained per role (older ones are pruned).
+RBAC_ROLE_HISTORY_MAX_VERSIONS = env.int("RBAC_ROLE_HISTORY_MAX_VERSIONS", default=20)
+
+# Roles provisioned / protected during tenant bootstrap.
+RBAC_PROTECTED_ROLE_CODES = env.list("RBAC_PROTECTED_ROLE_CODES", default=["admin"])
+RBAC_DEFAULT_ROLE_CODES = env.list("RBAC_DEFAULT_ROLE_CODES", default=["member"])
+
+# Provision baseline roles automatically when a new tenant is created.
+RBAC_BOOTSTRAP_ON_TENANT_CREATE = env.bool("RBAC_BOOTSTRAP_ON_TENANT_CREATE", default=True)
+
+# Allowed permission-code shape: <module>.<resource>.<action>.
+RBAC_PERMISSION_CODE_REGEX = env.str(
+    "RBAC_PERMISSION_CODE_REGEX",
+    default=r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$",
+)
+
+# ---------------------------------------------------------------------------
 # API documentation (drf-spectacular)
 # ---------------------------------------------------------------------------
 SPECTACULAR_SETTINGS = {
@@ -329,6 +361,7 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "health", "description": "Liveness & readiness probes"},
         {"name": "auth", "description": "JWT authentication endpoints"},
+        {"name": "rbac", "description": "Roles, permissions, assignments and effective-permission queries"},
     ],
 }
 

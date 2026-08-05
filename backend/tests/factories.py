@@ -7,6 +7,7 @@ from faker import Faker
 
 from apps.core.models import Tenant, User, UserStatus
 from apps.core.models.tenant import TenantStatus
+from apps.rbac.models import Permission, PermissionScope, Role, RoleGroup
 
 fake = Faker()
 
@@ -56,4 +57,43 @@ class TenantFactory(factory.django.DjangoModelFactory):
     timezone = "UTC"
     locale = "en"
     subscription_tier = "trial"
+    is_active = True
+
+
+class PermissionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Permission
+        django_get_or_create = ("code",)
+
+    code = factory.Sequence(lambda n: f"factory.module{n}.read")
+    name = factory.LazyAttribute(lambda o: o.code.replace(".", " ").title())
+    module = factory.Sequence(lambda n: f"factory_module{n}")
+    category = "general"
+    action = "read"
+    scope = PermissionScope.TENANT
+    is_system = False
+    is_active = True
+
+
+class RoleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Role
+
+    tenant = factory.SubFactory(TenantFactory)
+    name = factory.Sequence(lambda n: f"Role {n}")
+    code = factory.Sequence(lambda n: f"role_{n}")
+    description = ""
+    is_protected = False
+    is_default = False
+    is_active = True
+
+
+class RoleGroupFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RoleGroup
+
+    tenant = factory.SubFactory(TenantFactory)
+    name = factory.Sequence(lambda n: f"Group {n}")
+    code = factory.Sequence(lambda n: f"group_{n}")
+    description = ""
     is_active = True

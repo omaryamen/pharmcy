@@ -3,10 +3,34 @@
 from __future__ import annotations
 
 import re
+from contextlib import contextmanager
 
 from django.core import mail
 
 OTP_RE = re.compile(r"\b\d{6}\b")
+
+
+@contextmanager
+def as_request(user=None, tenant=None):
+    """Run a block with a synthetic request in the thread-local context.
+
+    Lets service-layer tests exercise the permission guards the way real
+    requests do (``get_current_user`` / ``get_current_tenant`` read from this
+    context). The request is cleared on exit.
+    """
+    from apps.common.utils import context as context_utils
+
+    class _FakeRequest:
+        pass
+
+    request = _FakeRequest()
+    request.user = user
+    request.tenant = tenant
+    context_utils.set_request(request)
+    try:
+        yield request
+    finally:
+        context_utils.clear()
 
 
 def get_email(to_email: str):

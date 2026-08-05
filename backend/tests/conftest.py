@@ -52,6 +52,32 @@ def tenant(db):
 
 
 @pytest.fixture
+def rbac_admin_user(db, user, tenant):
+    """A tenant member holding the tenant's bootstrap ``admin`` role."""
+    from apps.rbac.models import Role
+    from apps.rbac.services import RoleAssignmentService
+
+    user.tenants.add(tenant)
+    admin_role = Role.objects.get(tenant=tenant, code="admin")
+    RoleAssignmentService().assign(user=user, role=admin_role, actor=None, reason="test setup")
+    return user
+
+
+@pytest.fixture
+def rbac_admin_client(db, rbac_admin_user, tenant):
+    """API client authenticated as a tenant admin (full RBAC access)."""
+    from rest_framework_simplejwt.tokens import RefreshToken
+
+    client = APIClient()
+    refresh = RefreshToken.for_user(rbac_admin_user)
+    client.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}",
+        HTTP_X_TENANT_ID=str(tenant.pk),
+    )
+    return client
+
+
+@pytest.fixture
 def api_client():
     """Anonymous API client."""
     return APIClient()
