@@ -13,12 +13,23 @@ from django.db import IntegrityError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 
+from apps.common.exceptions import PharmaCloudError
+
 logger = logging.getLogger(__name__)
 
 
 def normalize_errors(data) -> list[dict]:
     """Normalize DRF error payloads into [{'code', 'field', 'message'}]."""
     if isinstance(data, dict):
+        # PharmaCloudError payload shape: {"code", "message", "field"?}.
+        if "code" in data and "message" in data:
+            return [
+                {
+                    "code": data["code"],
+                    "field": data.get("field"),
+                    "message": data["message"],
+                }
+            ]
         errors = []
         for field, value in data.items():
             if field == "detail":
@@ -53,7 +64,10 @@ def api_exception_handler(exc, context):
 
     if response is None:
         # Only unexpected exceptions reach here (Http404 is handled by DRF).
-        if isinstance(exc, IntegrityError):
+        if isinstance(exc, PharmaCloudError):
+            logger.info("Domain error during request: %s [%s]", exc.code, exc.status_code)
+            response = Response(exc.to_payload(), status=exc.status_code)
+        elif isinstance(exc, IntegrityError):
             logger.warning("IntegrityError during request: %s", exc)
             response = Response({"detail": "The operation would violate data integrity."}, status=400)
         else:

@@ -20,12 +20,12 @@ from apps.core.models import User, UserStatus
 
 from .models import LoginSession, SecurityEvent, SecurityEventType, SessionRevokeReason
 
-# Status -> audit event recorded for that transition (PENDING is set at
-# registration time and is covered by the registration service).
+# Status -> audit event recorded for that transition. LOCKED/INACTIVE -> ACTIVE
+# are resolved from the previous status below; PENDING is set at registration
+# time and is covered by the registration service.
 _STATUS_TRANSITION_EVENTS = {
     UserStatus.LOCKED: SecurityEventType.ACCOUNT_LOCKED,
     UserStatus.INACTIVE: SecurityEventType.ACCOUNT_DEACTIVATED,
-    UserStatus.ACTIVE: SecurityEventType.ACCOUNT_ACTIVATED,
 }
 
 
@@ -56,7 +56,13 @@ def record_status_transitions(sender, instance: User, **kwargs) -> None:
     if previous.status == instance.status:
         return
 
-    event_type = _STATUS_TRANSITION_EVENTS.get(instance.status)
+    if previous.status == UserStatus.LOCKED and instance.status == UserStatus.ACTIVE:
+        event_type = SecurityEventType.ACCOUNT_UNLOCKED
+    elif previous.status == UserStatus.INACTIVE and instance.status == UserStatus.ACTIVE:
+        event_type = SecurityEventType.ACCOUNT_ACTIVATED
+    else:
+        event_type = _STATUS_TRANSITION_EVENTS.get(instance.status)
+
     if event_type is not None:
         SecurityEvent.record(
             user=instance,

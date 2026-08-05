@@ -46,7 +46,17 @@ CACHES = {
 }
 
 # Keep throttle limits out of the way for the API tests.
-REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"anon": "1000/min", "user": "10000/min"}  # noqa: F405
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
+    "anon": "1000/min",
+    "user": "10000/min",
+    "auth_login_email": "100/min",
+    "auth_login_ip": "300/min",
+    "auth_password_reset_email": "60/hour",
+    "auth_register_ip": "60/min",
+}
+
+# Capture emails in memory so tests can assert on deliveries.
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Local file storage for tests; media root overridden in conftest.
 MEDIA_ROOT = "media_test"

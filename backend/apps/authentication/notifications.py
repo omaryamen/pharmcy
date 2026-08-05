@@ -7,6 +7,7 @@ SMTP; in tests Celery runs eager and the locmem backend captures messages.
 
 from __future__ import annotations
 
+import contextlib
 import html
 
 from django.conf import settings
@@ -87,10 +88,8 @@ def send_account_locked_notice_email(user: User) -> int:
     """Notify the user their account was locked after failed logins."""
     subject = "Your PharmaCloud account was locked"
     reset_url = ""
-    try:
+    with contextlib.suppress(Exception):  # route may not be mounted in admin contexts
         reset_url = reverse("auth-password-reset-request")
-    except Exception:  # noqa: BLE001 - route may not be mounted in admin contexts
-        pass
     text = (
         f"Hi {_escape(user.full_name or user.email)},\n\n"
         "Your account was locked because of repeated failed login attempts.\n"

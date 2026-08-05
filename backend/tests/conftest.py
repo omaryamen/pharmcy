@@ -26,6 +26,14 @@ def _use_tmp_media_root(tmp_path):
     settings.MEDIA_ROOT = str(tmp_path / "media")
 
 
+@pytest.fixture(autouse=True)
+def _clear_mail_outbox():
+    """Each test starts with an empty locmem email outbox."""
+    from django.core import mail
+
+    mail.outbox = []
+
+
 @pytest.fixture
 def user(db):
     return UserFactory()

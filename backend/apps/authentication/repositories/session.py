@@ -7,7 +7,7 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 
 from apps.common.repositories.base import BaseRepository
 
-from ..models import LoginSession, SessionRevokeReason
+from ..models import LoginSession, SessionDeviceType, SessionRevokeReason
 
 
 class LoginSessionRepository(BaseRepository[LoginSession]):
@@ -57,7 +57,7 @@ class LoginSessionRepository(BaseRepository[LoginSession]):
         user,
         refresh_token_jti: str,
         device_name: str = "",
-        device_type: str = LoginSession.SessionDeviceType.WEB,
+        device_type: str = SessionDeviceType.WEB,
         ip_address: str | None = None,
         user_agent: str = "",
         remember_me: bool = False,

@@ -10,8 +10,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.common.api.viewsets import BaseAPIView
-
 logger = logging.getLogger(__name__)
 
 LIVENESS_OK = {"status": "ok"}
@@ -94,12 +92,3 @@ class ReadinessView(HealthAPIView):
             {"status": "ready" if ready else "not_ready", "checks": checks},
             status=200 if ready else 503,
         )
-
-
-class MeView(BaseAPIView):
-    """Current authenticated user profile (foundation endpoint)."""
-
-    def get(self, request):
-        from apps.core.api.serializers import UserSerializer
-
-        return Response(UserSerializer(request.user).data)

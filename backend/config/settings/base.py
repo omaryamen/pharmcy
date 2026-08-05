@@ -245,6 +245,11 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/min",
         "user": "1000/min",
+        # Authentication endpoint scopes (apps.authentication.throttles).
+        "auth_login_email": "10/min",
+        "auth_login_ip": "30/min",
+        "auth_password_reset_email": "5/hour",
+        "auth_register_ip": "5/min",
     },
 }
 
