@@ -12,9 +12,7 @@ class UserRoleAssignmentRepository(BaseRepository[UserRoleAssignment]):
 
     def active_for_user(self, user, tenant) -> list[UserRoleAssignment]:
         return list(
-            self.filter(user=user, tenant=tenant, is_active=True)
-            .select_related("role")
-            .order_by("created_at")
+            self.filter(user=user, tenant=tenant, is_active=True).select_related("role").order_by("created_at")
         )
 
     def active_for_role(self, role) -> list[UserRoleAssignment]:

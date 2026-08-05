@@ -25,8 +25,9 @@ class EffectivePermissionService:
 
     def modules(self, user, tenant=None) -> list[str]:
         codes = self.engine.modules_for(user, tenant)
-        ordered = [module for module, spec in sorted(MODULE_SPECS.items(), key=lambda kv: kv[1]["order"]) if module in codes]
-        return ordered
+        return [
+            module for module, spec in sorted(MODULE_SPECS.items(), key=lambda kv: kv[1]["order"]) if module in codes
+        ]
 
     # ------------------------------------------------------------------
     # API payloads
@@ -78,7 +79,9 @@ class EffectivePermissionService:
         }
 
     def assigned_roles(self, user, tenant=None) -> list[dict]:
-        assignments = UserRoleAssignment.objects.filter(user=user, tenant=tenant, is_active=True).select_related("role")
+        assignments = UserRoleAssignment.objects.filter(user=user, tenant=tenant, is_active=True).select_related(
+            "role"
+        )
         return [
             {
                 "role_id": str(assignment.role_id),

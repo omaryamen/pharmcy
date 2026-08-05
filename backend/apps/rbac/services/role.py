@@ -169,9 +169,7 @@ class RoleService(BaseService[Role]):
             is_default=False,
             is_active=True,
         )
-        link_map = {
-            link.permission.code: link.allow for link in role.permission_links.select_related("permission")
-        }
+        link_map = {link.permission.code: link.allow for link in role.permission_links.select_related("permission")}
         self.permission_repository.replace_for_role(clone, link_map)
         for parent in role.parent_links.select_related("parent_role"):
             RoleHierarchy.objects.get_or_create(child_role=clone, parent_role=parent.parent_role)

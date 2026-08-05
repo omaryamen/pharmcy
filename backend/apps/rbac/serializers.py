@@ -213,7 +213,16 @@ class UserPermissionOverrideSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserPermissionOverride
-        fields = ("id", "user", "user_email", "permission", "permission_code", "permission_name", "allow", "created_at")
+        fields = (
+            "id",
+            "user",
+            "user_email",
+            "permission",
+            "permission_code",
+            "permission_name",
+            "allow",
+            "created_at",
+        )
         read_only_fields = ("id", "permission_code", "permission_name", "created_at")
 
     user_email = serializers.CharField(source="user.email", read_only=True)

@@ -1,8 +1,8 @@
 """Role group: a named bundle of roles for bulk assignment."""
+
 from __future__ import annotations
 
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import FullAuditModel
 from apps.common.models.tenancy import TenantAwareModel
@@ -40,7 +40,9 @@ class RoleGroup(FullAuditModel, TenantAwareModel):
 
 class RoleGroupMembership(FullAuditModel):
     group = models.ForeignKey(RoleGroup, on_delete=models.CASCADE, related_name="memberships", verbose_name="Group")
-    role = models.ForeignKey("rbac.Role", on_delete=models.CASCADE, related_name="group_memberships", verbose_name="Role")
+    role = models.ForeignKey(
+        "rbac.Role", on_delete=models.CASCADE, related_name="group_memberships", verbose_name="Role"
+    )
 
     class Meta:
         ordering = ["group", "role"]

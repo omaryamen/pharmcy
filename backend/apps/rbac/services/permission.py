@@ -10,7 +10,7 @@ import re
 
 from django.conf import settings
 
-from apps.common.exceptions import ConflictError, NotFoundError
+from apps.common.exceptions import ConflictError
 from apps.common.services.base import BaseService
 from apps.common.utils.context import get_current_user
 

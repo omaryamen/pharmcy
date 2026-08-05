@@ -18,5 +18,4 @@ class PermissionContextMiddleware:
 
     def __call__(self, request):
         request._rbac_effective = None
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import FullAuditModel
 from apps.common.models.tenancy import TenantAwareModel
@@ -75,7 +74,9 @@ class UserPermissionOverride(FullAuditModel, TenantAwareModel):
         verbose_name = "User permission override"
         verbose_name_plural = "User permission overrides"
         constraints = [
-            models.UniqueConstraint(fields=["tenant", "user", "permission"], name="rbac_override_tenant_user_perm_uniq"),
+            models.UniqueConstraint(
+                fields=["tenant", "user", "permission"], name="rbac_override_tenant_user_perm_uniq"
+            ),
         ]
 
     def __str__(self) -> str:

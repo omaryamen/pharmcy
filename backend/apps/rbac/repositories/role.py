@@ -39,9 +39,11 @@ class RolePermissionRepository(BaseRepository[RolePermission]):
         existing = {link.permission.code: link for link in self.for_role(role)}
         desired = set(codes)
 
+        # Hard-delete removed links so the ``Role.permissions`` M2M (which
+        # resolves through the base manager) never shows stale memberships.
         for code, link in existing.items():
             if code not in desired:
-                link.delete()
+                link.hard_delete()
 
         for code, allow in permission_map.items():
             link = existing.get(code)

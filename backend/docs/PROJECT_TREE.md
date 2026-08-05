@@ -1,8 +1,8 @@
 # PharmaCloud ERP — Backend Project Tree
 
-> Generated for the foundation + authentication milestone. `.venv`, `__pycache__`,
-> `.pytest_cache`, `.ruff_cache`, `media/`, `staticfiles/` and build artifacts
-> are excluded.
+> Generated for the foundation + authentication + enterprise-RBAC milestone.
+> `.venv`, `__pycache__`, `.pytest_cache`, `.ruff_cache`, `media/`,
+> `staticfiles/` and build artifacts are excluded.
 
 ```
 backend/
@@ -90,6 +90,62 @@ backend/
 │   │       ├── session.py              # session list/revoke
 │   │       ├── security.py             # audit trail reads
 │   │       └── events.py               # record_* audit helpers
+│   ├── rbac/                           # Enterprise role-based access control
+│   │   ├── README.md                   # module overview
+│   │   ├── admin.py                    # Permission / Role / RoleGroup / Assignment admin
+│   │   ├── apps.py
+│   │   ├── constants.py                # MODULE_SPECS → PERMISSION_CATALOG (76 codes) + RBAC_PERMISSIONS
+│   │   ├── decorators.py               # require_permission / require_permissions
+│   │   ├── exceptions.py               # RbacError hierarchy (protected_role, privilege_escalation, ...)
+│   │   ├── managers.py                 # Permission / role query managers
+│   │   ├── middleware.py               # PermissionContextMiddleware (per-request cache slot)
+│   │   ├── permissions.py              # HasPermission, HasAny/All, HasModuleAccess, HasObjectPermission
+│   │   ├── serializers.py              # Role / Group / Assignment / Override / History contracts
+│   │   ├── signals.py                  # tenant bootstrap + cache-version invalidation
+│   │   ├── ui.py                       # NavigationBuilder / PermissionTreeBuilder / ButtonVisibility
+│   │   ├── utils.py                    # code helpers
+│   │   ├── api/
+│   │   │   ├── urls.py                 # /api/v1/rbac/* routes (router + standalone views)
+│   │   │   └── views/
+│   │   │       ├── permissions.py      # catalog CRUD
+│   │   │       ├── roles.py            # role CRUD, permissions, parents, clone, history
+│   │   │       ├── groups.py           # group CRUD + role membership
+│   │   │       ├── assignments.py      # assign / revoke / bulk
+│   │   │       ├── users.py            # per-user roles / effective perms / overrides
+│   │   │       ├── me.py               # self-service permissions + navigation
+│   │   │       └── matrix.py           # role / caller permission matrix
+│   │   ├── engine/
+│   │   │   ├── engine.py               # PermissionEngine (precedence, point checks, cache)
+│   │   │   ├── resolver.py             # role_permission_map incl. inheritance
+│   │   │   └── cache.py                # PermissionCache (versioned effective-perm cache)
+│   │   ├── management/
+│   │   │   └── commands/
+│   │   │       └── sync_permissions.py # reconcile catalog with constants
+│   │   ├── migrations/
+│   │   │   ├── 0001_initial.py         # Permission, Role, RoleGroup, Hierarchy, Assignment, Override, Audit
+│   │   │   └── 0002_seed_permissions.py# data migration seeding the 76-code catalog
+│   │   ├── models/
+│   │   │   ├── permission.py           # Permission (global catalog)
+│   │   │   ├── role.py                 # Role + RolePermission links
+│   │   │   ├── hierarchy.py            # RoleHierarchy (parent links, cycle-safe)
+│   │   │   ├── group.py                # RoleGroup + RoleGroupMembership
+│   │   │   ├── assignment.py           # UserRoleAssignment + UserPermissionOverride
+│   │   │   └── audit.py                # RoleVersion snapshots + RoleAuditLog
+│   │   ├── repositories/
+│   │   │   ├── permission.py           # catalog + sync queries
+│   │   │   ├── role.py                 # role CRUD + link replacement (hard delete)
+│   │   │   ├── hierarchy.py            # parent-link management
+│   │   │   ├── group.py                # group CRUD + membership replacement
+│   │   │   ├── assignment.py           # active assignments, primaries, admin count
+│   │   │   └── audit.py                # version snapshots (pruning) + audit trail
+│   │   └── services/
+│   │       ├── permission.py           # catalog sync
+│   │       ├── role.py                 # role lifecycle + guards + history
+│   │       ├── hierarchy.py            # add/remove parent, cycle detection
+│   │       ├── group.py                # group lifecycle + role membership
+│   │       ├── assignment.py           # assign/revoke + escalation/protected/last-admin guards
+│   │       ├── bootstrap.py            # idempotent tenant admin/member provisioning
+│   │       └── effective.py            # read-side facade (my perms, matrices, navigation)
 │   └── core/                           # Users, tenants, health (foundation domain)
 │       ├── admin.py                    # User + Tenant admin
 │       ├── apps.py
@@ -117,6 +173,8 @@ backend/
 │   ├── AUTH_API.md                     # Authentication API reference + error codes
 │   ├── AUTH_CONFIG.md                  # Policy / throttle / JWT configuration guide
 │   ├── AUTH_FLOWS.md                   # Mermaid sequence diagrams for identity flows
+│   ├── RBAC_API.md                     # RBAC API reference + error codes
+│   ├── RBAC_ARCHITECTURE.md            # Permission model, engine, guards, configuration
 │   └── PROJECT_TREE.md                 # This file
 ├── nginx/
 │   └── nginx.conf                      # HTTP→HTTPS, static/media, API proxy
@@ -140,6 +198,11 @@ backend/
 │   ├── test_models.py                  # User + Tenant model behavior
 │   ├── test_password.py                # password change + reuse prevention
 │   ├── test_repositories_services.py   # BaseRepository / BaseService contracts
+│   ├── test_rbac_api.py                # RBAC API endpoints (roles, groups, assignments, users, me, matrix)
+│   ├── test_rbac_engine.py             # PermissionEngine precedence, caching, module access
+│   ├── test_rbac_models.py             # Permission / Role / Group / Hierarchy / Assignment models
+│   ├── test_rbac_security.py           # escalation, protected-role, last-admin, tenant isolation
+│   ├── test_rbac_services.py           # Role / Group / Assignment / Bootstrap services
 │   ├── test_sessions.py                # session ledger, audit trail, profile
 │   ├── test_throttling.py              # per-email / per-IP rate limits
 │   └── test_verification.py            # registration, email/phone verify, password reset

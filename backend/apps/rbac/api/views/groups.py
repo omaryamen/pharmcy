@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -27,22 +26,17 @@ class RoleGroupViewSet(BaseModelViewSet):
     permission_code_prefix = "rbac.group"
     lookup_value_regex = UUID_REGEX
 
-    @action(detail=True, methods=["get"], url_path="roles")
+    @action(detail=True, methods=["get", "put"], url_path="roles")
     def roles(self, request, pk=None):
         group = self.get_object()
-        memberships = group.memberships.select_related("role").order_by("role__name")
-        return Response(RoleSerializer([m.role for m in memberships], many=True).data)
-
-    @action(detail=True, methods=["put"], url_path="roles")
-    def set_roles(self, request, pk=None):
-        group = self.get_object()
-        serializer = RoleGroupRolesSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        role_ids = serializer.validated_data["role_ids"]
-        found = set(Role.objects.filter(pk__in=role_ids, tenant=group.tenant).values_list("pk", flat=True))
-        missing = set(role_ids) - found
-        if missing:
-            raise NotFoundError("One or more roles do not exist in this tenant.")
-        self.get_service().set_roles(group, role_ids)
+        if request.method == "PUT":
+            serializer = RoleGroupRolesSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            role_ids = serializer.validated_data["role_ids"]
+            found = set(Role.objects.filter(pk__in=role_ids, tenant=group.tenant).values_list("pk", flat=True))
+            missing = set(role_ids) - found
+            if missing:
+                raise NotFoundError("One or more roles do not exist in this tenant.")
+            self.get_service().set_roles(group, role_ids)
         memberships = group.memberships.select_related("role").order_by("role__name")
         return Response(RoleSerializer([m.role for m in memberships], many=True).data)

@@ -61,6 +61,7 @@ class TestEscalation:
     def test_escalation_blocked_via_api(self, tenant):
         actor = UserFactory()
         target = UserFactory()
+        target.tenants.add(tenant)
         _assign(actor, _role_with(tenant, "assigner", [RBAC_PERMISSIONS["ASSIGNMENT_CREATE"]]))
         broad = _role_with(tenant, "broad", [RBAC_PERMISSIONS["ROLE_CREATE"], RBAC_PERMISSIONS["ROLE_DELETE"]])
 
@@ -77,6 +78,7 @@ class TestEscalation:
         settings.RBAC_ENFORCE_ESCALATION_GUARD = False
         actor = UserFactory()
         target = UserFactory()
+        target.tenants.add(tenant)
         _assign(actor, _role_with(tenant, "assigner", [RBAC_PERMISSIONS["ASSIGNMENT_CREATE"]]))
         broad = _role_with(tenant, "broad", [RBAC_PERMISSIONS["ROLE_CREATE"]])
 
@@ -91,6 +93,7 @@ class TestEscalation:
     def test_subset_grant_allowed_via_api(self, tenant):
         actor = UserFactory()
         target = UserFactory()
+        target.tenants.add(tenant)
         _assign(actor, _role_with(tenant, "assigner", [RBAC_PERMISSIONS["ASSIGNMENT_CREATE"], "catalog.item.read"]))
         cashier = _role_with(tenant, "cashier", ["catalog.item.read"])
 
@@ -130,6 +133,7 @@ class TestProtectedGuards:
     def test_assigning_protected_role_requires_privilege(self, tenant):
         actor = UserFactory()
         target = UserFactory()
+        target.tenants.add(tenant)
         _assign(actor, _role_with(tenant, "assigner", [RBAC_PERMISSIONS["ASSIGNMENT_CREATE"]]))
         admin = Role.objects.get(tenant=tenant, code="admin")
 

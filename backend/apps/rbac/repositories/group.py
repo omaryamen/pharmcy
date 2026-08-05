@@ -20,7 +20,9 @@ class RoleGroupMembershipRepository(BaseRepository[RoleGroupMembership]):
     def replace_roles(self, group, role_ids: list) -> None:
         existing = {membership.role_id for membership in self.filter(group=group)}
         desired = set(role_ids)
-        for role_id in existing - desired:
-            self.filter(group=group, role_id=role_id).delete()
+        # Hard-delete removed memberships: the ``RoleGroup.roles`` M2M resolves
+        # through the base manager, so soft-deleted rows would stay visible.
+        for membership in self.filter(group=group).exclude(role_id__in=desired):
+            membership.hard_delete()
         for role_id in desired - existing:
             self.create(group=group, role_id=role_id)

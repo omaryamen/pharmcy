@@ -18,7 +18,6 @@ from ...serializers import (
     RoleHierarchySerializer,
     RoleParentLinkSerializer,
     RolePermissionMapSerializer,
-    RolePermissionSerializer,
     RoleSerializer,
     RoleVersionSerializer,
 )
@@ -70,22 +69,19 @@ class RoleViewSet(BaseModelViewSet):
             return Response({"permissions": self.get_service().permissions_matrix(role)})
         return Response({"permissions": self.get_service().permissions_matrix(role)})
 
-    @action(detail=True, methods=["get"], url_path="parents")
+    @action(detail=True, methods=["get", "post"], url_path="parents")
     def parents(self, request, pk=None):
         role = self.get_object()
+        if request.method == "POST":
+            serializer = RoleParentLinkSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            parent = Role.objects.filter(pk=serializer.validated_data["parent_role"]).first()
+            if parent is None:
+                raise NotFoundError("Parent role not found.")
+            link = RoleHierarchyService().add_parent(role, parent, actor=request.user)
+            return Response(RoleHierarchySerializer(link).data, status=status.HTTP_201_CREATED)
         links = role.parent_links.select_related("parent_role").order_by("parent_role__name")
         return Response(RoleHierarchySerializer(links, many=True).data)
-
-    @action(detail=True, methods=["post"], url_path="parents")
-    def add_parent(self, request, pk=None):
-        role = self.get_object()
-        serializer = RoleParentLinkSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        parent = Role.objects.filter(pk=serializer.validated_data["parent_role"]).first()
-        if parent is None:
-            raise NotFoundError("Parent role not found.")
-        link = RoleHierarchyService().add_parent(role, parent, actor=request.user)
-        return Response(RoleHierarchySerializer(link).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["delete"], url_path=f"parents/(?P<parent_id>{UUID_REGEX})")
     def remove_parent(self, request, pk=None, parent_id=None):

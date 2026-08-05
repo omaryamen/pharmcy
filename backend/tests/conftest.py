@@ -96,10 +96,15 @@ def authenticated_client(db, user):
 
 @pytest.fixture
 def tenant_authenticated_client(db, user, tenant):
-    """API client authenticated and carrying a tenant header."""
-    from rest_framework_simplejwt.tokens import RefreshToken
+    """API client authenticated as a default tenant ``member`` (read-only)."""
+    from apps.rbac.models import Role
+    from apps.rbac.services import RoleAssignmentService
 
     user.tenants.add(tenant)
+    member_role = Role.objects.get(tenant=tenant, code="member")
+    RoleAssignmentService().assign(user=user, role=member_role, actor=None, reason="test setup")
+    from rest_framework_simplejwt.tokens import RefreshToken
+
     client = APIClient()
     refresh = RefreshToken.for_user(user)
     client.credentials(

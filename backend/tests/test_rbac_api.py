@@ -143,9 +143,7 @@ class TestGroupEndpoints:
         group_id = response.json()["data"]["id"]
 
         member_id = _role_id(rbac_admin_client, tenant, "member")
-        response = rbac_admin_client.put(
-            f"{API}/groups/{group_id}/roles/", {"role_ids": [member_id]}, format="json"
-        )
+        response = rbac_admin_client.put(f"{API}/groups/{group_id}/roles/", {"role_ids": [member_id]}, format="json")
         assert response.status_code == 200
         assert [row["code"] for row in response.json()["data"]] == ["member"]
 

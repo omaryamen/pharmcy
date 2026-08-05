@@ -12,7 +12,7 @@ from django.db import transaction
 
 from ..constants import ADMIN_ROLE_CODE, MEMBER_ROLE_CODE
 from ..engine import PermissionCache
-from ..models import Permission, Role, RolePermission, PermissionScope
+from ..models import Permission, PermissionScope, Role, RolePermission
 from ..repositories import RoleAuditLogRepository, RoleRepository, RoleVersionRepository
 
 
@@ -24,36 +24,36 @@ class RoleBootstrapService:
 
     @transaction.atomic
     def ensure_tenant_defaults(self, tenant) -> dict:
-        """Create ``admin`` + ``member`` for the tenant if missing."""
+        """Create ``admin`` + ``member`` for the tenant if missing.
+
+        Idempotent: existing roles (even soft-deleted ones) are reused and
+        restored rather than duplicated, so re-provisioning is always safe.
+        """
         created = {"admin": False, "member": False}
 
-        admin = self.role_repository.get_by_code(tenant, ADMIN_ROLE_CODE)
-        if admin is None:
-            admin = self.role_repository.create(
-                tenant=tenant,
-                name="Administrator",
-                code=ADMIN_ROLE_CODE,
-                description="Tenant administrator with full access.",
-                is_protected=True,
-                is_default=False,
-                is_active=True,
-            )
+        admin, admin_created = self._get_or_restore(
+            tenant,
+            ADMIN_ROLE_CODE,
+            name="Administrator",
+            description="Tenant administrator with full access.",
+            is_protected=True,
+            is_default=False,
+        )
+        if admin_created:
             self._grant(admin, PermissionScope.TENANT)
             self._snapshot(admin, "bootstrap admin role")
             created["admin"] = True
 
-        member = self.role_repository.get_by_code(tenant, MEMBER_ROLE_CODE)
-        if member is None:
-            member = self.role_repository.create(
-                tenant=tenant,
-                name="Member",
-                code=MEMBER_ROLE_CODE,
-                description="Default role for new tenant members.",
-                is_protected=False,
-                is_default=True,
-                is_active=True,
-            )
-            self._grant(member, PermissionScope.TENANT, actions={"read"})
+        member, member_created = self._get_or_restore(
+            tenant,
+            MEMBER_ROLE_CODE,
+            name="Member",
+            description="Default role for new tenant members.",
+            is_protected=False,
+            is_default=True,
+        )
+        if member_created:
+            self._grant(member, PermissionScope.TENANT, actions={"read"}, exclude_modules={"rbac"})
             self._snapshot(member, "bootstrap member role")
             created["member"] = True
 
@@ -63,10 +63,26 @@ class RoleBootstrapService:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-    def _grant(self, role: Role, scope: str, actions: set[str] | None = None) -> None:
+    def _get_or_restore(self, tenant, code: str, **defaults) -> tuple[Role, bool]:
+        """Return (role, was_created). A soft-deleted role is restored in place."""
+        role = Role.objects.all_with_deleted().filter(tenant=tenant, code=code).first()
+        if role is not None:
+            if role.is_deleted:
+                role.is_deleted = False
+                role.deleted_at = None
+                role.save(update_fields=["is_deleted", "deleted_at", "updated_at"])
+            return role, False
+        role = self.role_repository.create(tenant=tenant, code=code, is_active=True, **defaults)
+        return role, True
+
+    def _grant(
+        self, role: Role, scope: str, actions: set[str] | None = None, exclude_modules: set[str] | None = None
+    ) -> None:
         qs = Permission.objects.filter(is_active=True, scope=scope)
         if actions is not None:
             qs = qs.filter(action__in=actions)
+        if exclude_modules:
+            qs = qs.exclude(module__in=exclude_modules)
         links = [RolePermission(role=role, permission=permission, allow=True) for permission in qs]
         RolePermission.objects.bulk_create(links, batch_size=500)
 

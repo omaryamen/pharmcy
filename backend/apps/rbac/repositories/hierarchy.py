@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections import deque
-
 from apps.common.repositories.base import BaseRepository
 
 from ..models import RoleHierarchy

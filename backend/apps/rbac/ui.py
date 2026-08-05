@@ -52,7 +52,11 @@ class PermissionTreeBuilder:
         for perm in Permission.objects.filter(is_active=True).order_by("module", "category", "code"):
             module = modules.setdefault(
                 perm.module,
-                {"module": perm.module, "label": MODULE_SPECS.get(perm.module, {}).get("label", perm.module.title()), "categories": {}},
+                {
+                    "module": perm.module,
+                    "label": MODULE_SPECS.get(perm.module, {}).get("label", perm.module.title()),
+                    "categories": {},
+                },
             )
             category = module["categories"].setdefault(perm.category, {"category": perm.category, "permissions": []})
             category["permissions"].append(

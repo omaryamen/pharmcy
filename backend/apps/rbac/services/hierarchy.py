@@ -65,7 +65,9 @@ class RoleHierarchyService:
         if actor is None or actor.is_superuser or not getattr(actor, "is_authenticated", False):
             return
         engine = PermissionEngine()
-        if role.is_protected and not engine.has_permission(actor, RBAC_PERMISSIONS["ROLE_PROTECTED_MANAGE"], role.tenant):
+        if role.is_protected and not engine.has_permission(
+            actor, RBAC_PERMISSIONS["ROLE_PROTECTED_MANAGE"], role.tenant
+        ):
             raise ProtectedRoleError()
         if not engine.has_permission(actor, RBAC_PERMISSIONS["ROLE_UPDATE"], role.tenant):
             raise MissingRbacPermissionError()

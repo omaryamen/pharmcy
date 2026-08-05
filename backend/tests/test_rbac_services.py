@@ -20,7 +20,7 @@ from apps.rbac.exceptions import (
     ProtectedRoleError,
     RoleInUseError,
 )
-from apps.rbac.models import Permission, Role, RoleGroup, RolePermission, RoleVersion
+from apps.rbac.models import Permission, Role, RolePermission, RoleVersion
 from apps.rbac.services import (
     PermissionService,
     RoleAssignmentService,
@@ -91,11 +91,8 @@ class TestRoleService:
         # Actor may create roles but not manage protected ones.
         _role_with(tenant, "role_manager", [RBAC_PERMISSIONS["ROLE_CREATE"]])
         _assign(actor, Role.objects.get(tenant=tenant, code="role_manager"))
-        with as_request(user=actor, tenant=tenant):
-            with pytest.raises(ProtectedRoleError):
-                RoleService().create(
-                    {"tenant": tenant, "name": "Super", "code": "super", "is_protected": True}
-                )
+        with as_request(user=actor, tenant=tenant), pytest.raises(ProtectedRoleError):
+            RoleService().create({"tenant": tenant, "name": "Super", "code": "super", "is_protected": True})
 
     def test_update_renames_and_bumps_version(self, tenant):
         role = RoleService().create({"tenant": tenant, "name": "Role", "code": "role"})
@@ -116,8 +113,9 @@ class TestRoleService:
     def test_set_permissions_replaces_links(self, tenant):
         role = RoleService().create({"tenant": tenant, "name": "Role", "code": "role"})
         RoleService().set_permissions(role, {CATALOG_ITEM_READ: True, CATALOG_ITEM_CREATE: False})
-        assert {CATALOG_ITEM_READ: True, CATALOG_ITEM_CREATE: False} == {
-            link.permission.code: link.allow for link in role.permission_links.select_related("permission")
+        assert {link.permission.code: link.allow for link in role.permission_links.select_related("permission")} == {
+            CATALOG_ITEM_READ: True,
+            CATALOG_ITEM_CREATE: False,
         }
         RoleService().set_permissions(role, {CATALOG_ITEM_READ: True})
         assert list(role.permission_links.values_list("permission__code", flat=True)) == [CATALOG_ITEM_READ]
@@ -150,9 +148,8 @@ class TestRoleService:
         assert not Role.objects.filter(pk=role.pk).exists()
 
     def test_requires_permission_for_actor(self, tenant, user):
-        with as_request(user=user, tenant=tenant):
-            with pytest.raises(MissingRbacPermissionError):
-                RoleService().create({"tenant": tenant, "name": "Nope", "code": "nope"})
+        with as_request(user=user, tenant=tenant), pytest.raises(MissingRbacPermissionError):
+            RoleService().create({"tenant": tenant, "name": "Nope", "code": "nope"})
 
 
 class TestRoleHierarchyService:
@@ -219,6 +216,7 @@ class TestRoleGroupService:
 
 class TestRoleAssignmentService:
     def test_assign_creates_active_assignment(self, tenant, user):
+        user.tenants.add(tenant)
         role = _role_with(tenant, "cashier", [CATALOG_ITEM_READ])
         assignment = RoleAssignmentService().assign(user=user, role=role, actor=None, reason="hired")
         assert assignment.is_active is True
@@ -245,9 +243,9 @@ class TestRoleAssignmentService:
         service = RoleAssignmentService()
         service.assign(user=user, role=first, actor=None, is_primary=True)
         service.assign(user=user, role=second, actor=None, is_primary=True)
-        primaries = service.list_for_user(user, tenant).filter(is_primary=True)
-        assert primaries.count() == 1
-        assert primaries.first().role.code == "second"
+        primaries = [a for a in service.list_for_user(user, tenant) if a.is_primary]
+        assert len(primaries) == 1
+        assert primaries[0].role.code == "second"
 
     def test_reassign_reactivates_soft_revoked(self, tenant, user):
         user.tenants.add(tenant)
@@ -289,16 +287,17 @@ class TestRoleAssignmentService:
         actor = UserFactory()
         target = UserFactory()
         actor.tenants.add(tenant)
+        target.tenants.add(tenant)
         _assign(actor, _role_with(tenant, "assigner", [RBAC_PERMISSIONS["ASSIGNMENT_CREATE"]]))
         broad = _role_with(tenant, "broad", [RBAC_PERMISSIONS["ROLE_CREATE"], RBAC_PERMISSIONS["ROLE_DELETE"]])
-        with as_request(user=actor, tenant=tenant):
-            with pytest.raises(PrivilegeEscalationError):
-                RoleAssignmentService().assign(user=target, role=broad, actor=actor)
+        with as_request(user=actor, tenant=tenant), pytest.raises(PrivilegeEscalationError):
+            RoleAssignmentService().assign(user=target, role=broad, actor=actor)
 
     def test_escalation_guard_allows_subset_grant(self, tenant):
         actor = UserFactory()
         target = UserFactory()
         actor.tenants.add(tenant)
+        target.tenants.add(tenant)
         _assign(actor, _role_with(tenant, "assigner", [RBAC_PERMISSIONS["ASSIGNMENT_CREATE"], CATALOG_ITEM_READ]))
         cashier = _role_with(tenant, "cashier", [CATALOG_ITEM_READ])
         with as_request(user=actor, tenant=tenant):
@@ -309,16 +308,16 @@ class TestRoleAssignmentService:
         actor = UserFactory()
         target = UserFactory()
         actor.tenants.add(tenant)
+        target.tenants.add(tenant)
         _assign(actor, _role_with(tenant, "reader", [CATALOG_ITEM_READ]))
         cashier = _role_with(tenant, "cashier", [CATALOG_ITEM_READ])
-        with as_request(user=actor, tenant=tenant):
-            with pytest.raises(MissingRbacPermissionError):
-                RoleAssignmentService().assign(user=target, role=cashier, actor=actor)
+        with as_request(user=actor, tenant=tenant), pytest.raises(MissingRbacPermissionError):
+            RoleAssignmentService().assign(user=target, role=cashier, actor=actor)
 
     def test_set_user_roles_reconciles(self, tenant, user):
         user.tenants.add(tenant)
-        cashier = _role_with(tenant, "cashier", [CATALOG_ITEM_READ])
-        manager = _role_with(tenant, "manager", [CATALOG_ITEM_CREATE])
+        _role_with(tenant, "cashier", [CATALOG_ITEM_READ])
+        _role_with(tenant, "manager", [CATALOG_ITEM_CREATE])
         service = RoleAssignmentService()
         service.set_user_roles(user=user, tenant=tenant, role_codes=["cashier"], actor=None)
         result = service.set_user_roles(user=user, tenant=tenant, role_codes=["manager"], actor=None)
@@ -329,7 +328,9 @@ class TestRoleAssignmentService:
 
 class TestPermissionService:
     def test_create_custom_permission(self):
-        permission = PermissionService().create({"code": "custom.module.read", "name": "Custom Read", "module": "custom"})
+        permission = PermissionService().create(
+            {"code": "custom.module.read", "name": "Custom Read", "module": "custom"}
+        )
         assert permission.is_system is False
 
     def test_create_rejects_invalid_code(self):
@@ -358,8 +359,22 @@ class TestPermissionService:
 
     def test_sync_catalog_is_idempotent_and_reconciling(self):
         catalog = [
-            {"code": "sync.a.read", "name": "A Read", "module": "sync", "category": "general", "action": "read", "scope": "tenant"},
-            {"code": "sync.b.read", "name": "B Read", "module": "sync", "category": "general", "action": "read", "scope": "tenant"},
+            {
+                "code": "sync.a.read",
+                "name": "A Read",
+                "module": "sync",
+                "category": "general",
+                "action": "read",
+                "scope": "tenant",
+            },
+            {
+                "code": "sync.b.read",
+                "name": "B Read",
+                "module": "sync",
+                "category": "general",
+                "action": "read",
+                "scope": "tenant",
+            },
         ]
         first = PermissionService().sync_catalog(catalog=catalog)
         assert first["created"] == 2
@@ -370,7 +385,14 @@ class TestPermissionService:
 
     def test_sync_catalog_deactivates_removed_codes(self):
         catalog = [
-            {"code": "sync.only.read", "name": "Only", "module": "sync", "category": "general", "action": "read", "scope": "tenant"},
+            {
+                "code": "sync.only.read",
+                "name": "Only",
+                "module": "sync",
+                "category": "general",
+                "action": "read",
+                "scope": "tenant",
+            },
         ]
         PermissionService().sync_catalog(catalog=catalog)
         assert Permission.objects.get(code="sync.only.read").is_active is True
@@ -385,11 +407,23 @@ class TestRoleBootstrapService:
 
     def test_ensure_tenant_defaults_creates_when_missing(self):
         tenant = TenantFactory()
-        Role.objects.filter(tenant=tenant, code=ADMIN_ROLE_CODE).delete()
+        # Hard-remove the admin role (as if never bootstrapped).
+        Role.objects.all_with_deleted().get(tenant=tenant, code=ADMIN_ROLE_CODE).hard_delete()
         result = RoleBootstrapService().ensure_tenant_defaults(tenant)
         assert result["admin"] is True
         assert result["member"] is False
         assert Role.objects.get(tenant=tenant, code=ADMIN_ROLE_CODE).is_protected is True
+
+    def test_ensure_tenant_defaults_restores_soft_deleted_role(self):
+        tenant = TenantFactory()
+        admin = Role.objects.get(tenant=tenant, code=ADMIN_ROLE_CODE)
+        admin.delete()
+        assert not Role.objects.filter(pk=admin.pk).exists()
+        result = RoleBootstrapService().ensure_tenant_defaults(tenant)
+        assert result == {"admin": False, "member": False}
+        restored = Role.objects.get(pk=admin.pk)
+        assert restored.is_deleted is False
+        assert restored.is_active is True
 
 
 class TestRoleVersionHistory:

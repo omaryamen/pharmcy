@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import transaction
-from django.utils import timezone
 
 from apps.common.exceptions import ConflictError, NotFoundError
 from apps.common.services.base import BaseService
@@ -56,7 +55,9 @@ class RoleAssignmentService(BaseService[UserRoleAssignment]):
     # Writes
     # ------------------------------------------------------------------
     @transaction.atomic
-    def assign(self, *, user, role: Role, actor=None, is_primary: bool = False, reason: str = "") -> UserRoleAssignment:
+    def assign(
+        self, *, user, role: Role, actor=None, is_primary: bool = False, reason: str = ""
+    ) -> UserRoleAssignment:
         actor = actor or get_current_user()
         tenant = role.tenant
 
@@ -85,9 +86,7 @@ class RoleAssignmentService(BaseService[UserRoleAssignment]):
                     assignment, is_primary=is_primary or assignment.is_primary, reason=reason or assignment.reason
                 )
             else:
-                assignment = self.repository.update(
-                    assignment, is_active=True, is_primary=is_primary, reason=reason
-                )
+                assignment = self.repository.update(assignment, is_active=True, is_primary=is_primary, reason=reason)
 
         if is_primary:
             self.repository.demote_primaries(user, tenant, except_assignment=assignment)
@@ -148,10 +147,14 @@ class RoleAssignmentService(BaseService[UserRoleAssignment]):
         errors: list[dict] = []
         for entry in entries:
             try:
-                assignment = self.assign(user=entry["user"], role=entry["role"], actor=actor, reason=entry.get("reason", ""))
+                assignment = self.assign(
+                    user=entry["user"], role=entry["role"], actor=actor, reason=entry.get("reason", "")
+                )
                 assigned.append(str(assignment.pk))
             except Exception as exc:  # noqa: BLE001 - collect per-entry failures
-                errors.append({"user": str(entry.get("user", "")), "role": str(entry.get("role", "")), "error": str(exc)})
+                errors.append(
+                    {"user": str(entry.get("user", "")), "role": str(entry.get("role", "")), "error": str(exc)}
+                )
         return {"assigned": assigned, "errors": errors}
 
     # ------------------------------------------------------------------

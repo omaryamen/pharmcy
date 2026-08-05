@@ -48,7 +48,11 @@ def require_permissions(*codes: str, mode: str = "any"):
                 raise PermissionDeniedError("Authentication required.")
             tenant = getattr(request, "tenant", None) if request is not None else get_current_tenant()
             engine = PermissionEngine()
-            ok = engine.has_all(user, list(codes), tenant) if mode == "all" else engine.has_any(user, list(codes), tenant)
+            ok = (
+                engine.has_all(user, list(codes), tenant)
+                if mode == "all"
+                else engine.has_any(user, list(codes), tenant)
+            )
             if not ok:
                 raise PermissionDeniedError("You do not have the required permissions.")
             return fn(request, *args, **kwargs)

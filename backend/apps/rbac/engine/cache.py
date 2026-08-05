@@ -9,6 +9,8 @@ are cleaned by the backend TTL.
 
 from __future__ import annotations
 
+from contextlib import suppress
+
 from django.conf import settings
 from django.core.cache import cache
 
@@ -51,7 +53,5 @@ class PermissionCache:
             return None
 
     def set_effective(self, user_id, tenant_id, codes: set) -> None:
-        try:
+        with suppress(Exception):
             self.backend.set(self.key_for(user_id, tenant_id), list(codes), settings.RBAC_CACHE_TTL_SECONDS)
-        except Exception:
-            pass

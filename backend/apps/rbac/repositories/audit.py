@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from django.conf import settings
-
 from apps.common.repositories.base import BaseRepository
 
 from ..models import RoleAuditLog, RoleVersion
@@ -13,7 +11,8 @@ class RoleVersionRepository(BaseRepository[RoleVersion]):
     model = RoleVersion
 
     def next_version(self, role) -> int:
-        return self.filter(role=role).count() + 1
+        latest = self.filter(role=role).order_by("-version").first()
+        return (latest.version + 1) if latest is not None else 1
 
     def snapshots(self, role):
         return self.filter(role=role).order_by("-version")

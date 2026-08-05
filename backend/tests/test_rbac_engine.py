@@ -9,7 +9,7 @@ from apps.rbac.constants import PERMISSION_CATALOG
 from apps.rbac.engine import PermissionCache, PermissionEngine, PermissionResolver
 from apps.rbac.models import Permission, Role, RolePermission, UserPermissionOverride
 from apps.rbac.services import RoleAssignmentService
-from tests.factories import RoleFactory, UserFactory
+from tests.factories import RoleFactory
 
 pytestmark = pytest.mark.django_db
 

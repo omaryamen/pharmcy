@@ -9,6 +9,7 @@ and soft deletion never issues a physical delete. Used by admin and by the
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 from django.conf import settings
@@ -104,7 +105,7 @@ class SecurityEvent(UUIDTimeStampedModel):
         if request is not None:
             ip_address = ip_address or request.META.get("REMOTE_ADDR")
             user_agent = user_agent or request.META.get("HTTP_USER_AGENT", "")
-        return cls.objects.create(
+        instance = cls.objects.create(
             user=user,
             session=session,
             event_type=event_type,
@@ -113,3 +114,26 @@ class SecurityEvent(UUIDTimeStampedModel):
             device_name=device_name,
             details=details or {},
         )
+        cls._ensure_monotonic_created_at(instance)
+        return instance
+
+    @classmethod
+    def _ensure_monotonic_created_at(cls, instance: "SecurityEvent") -> None:
+        """Guarantee strictly increasing ``created_at`` per user.
+
+        ``created_at`` has microsecond precision, so rapid consecutive events
+        can share a timestamp; without a monotonic guarantee the default
+        "most recent first" ordering becomes unstable.
+        """
+        if instance.user_id is None:
+            return
+        previous = (
+            cls.objects.filter(user_id=instance.user_id, created_at__gte=instance.created_at)
+            .exclude(pk=instance.pk)
+            .order_by("-created_at")
+            .first()
+        )
+        if previous is not None and previous.created_at >= instance.created_at:
+            new_created_at = previous.created_at + timedelta(microseconds=1)
+            cls.objects.filter(pk=instance.pk).update(created_at=new_created_at)
+            instance.created_at = new_created_at

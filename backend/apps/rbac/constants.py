@@ -21,7 +21,13 @@ from typing import Any
 #: Modules the platform ships. ``scope`` defaults to tenant; platform-level
 #: capabilities (e.g. subscription administration) use scope ``platform``.
 MODULE_SPECS: dict[str, dict[str, Any]] = {
-    "dashboard": {"label": "Dashboard", "icon": "dashboard", "route": "/dashboard", "order": 10, "actions": ["read", "manage"]},
+    "dashboard": {
+        "label": "Dashboard",
+        "icon": "dashboard",
+        "route": "/dashboard",
+        "order": 10,
+        "actions": ["read", "manage"],
+    },
     "catalog": {
         "label": "Catalog",
         "icon": "medication",
@@ -61,11 +67,35 @@ MODULE_SPECS: dict[str, dict[str, Any]] = {
         },
     },
     "pos": {"label": "Point of Sale", "icon": "pos", "route": "/pos", "order": 60, "actions": ["read", "manage"]},
-    "customers": {"label": "Customers", "icon": "people", "route": "/customers", "order": 70, "actions": ["read", "create", "update", "delete"]},
-    "suppliers": {"label": "Suppliers", "icon": "truck", "route": "/suppliers", "order": 80, "actions": ["read", "create", "update", "delete"]},
-    "pharmacy": {"label": "Pharmacy", "icon": "medical", "route": "/pharmacy", "order": 90, "actions": ["read", "manage"]},
+    "customers": {
+        "label": "Customers",
+        "icon": "people",
+        "route": "/customers",
+        "order": 70,
+        "actions": ["read", "create", "update", "delete"],
+    },
+    "suppliers": {
+        "label": "Suppliers",
+        "icon": "truck",
+        "route": "/suppliers",
+        "order": 80,
+        "actions": ["read", "create", "update", "delete"],
+    },
+    "pharmacy": {
+        "label": "Pharmacy",
+        "icon": "medical",
+        "route": "/pharmacy",
+        "order": 90,
+        "actions": ["read", "manage"],
+    },
     "reports": {"label": "Reports", "icon": "chart", "route": "/reports", "order": 100, "actions": ["read", "manage"]},
-    "billing": {"label": "Billing", "icon": "card", "route": "/billing", "order": 110, "actions": ["read", "create", "update", "delete"]},
+    "billing": {
+        "label": "Billing",
+        "icon": "card",
+        "route": "/billing",
+        "order": 110,
+        "actions": ["read", "create", "update", "delete"],
+    },
     "rbac": {
         "label": "Access Control",
         "icon": "lock",
@@ -84,8 +114,20 @@ MODULE_SPECS: dict[str, dict[str, Any]] = {
             "rbac.matrix.read",
         ],
     },
-    "settings": {"label": "Settings", "icon": "settings", "route": "/settings", "order": 120, "actions": ["read", "manage"]},
-    "integrations": {"label": "Integrations", "icon": "plug", "route": "/integrations", "order": 130, "actions": ["read", "manage"]},
+    "settings": {
+        "label": "Settings",
+        "icon": "settings",
+        "route": "/settings",
+        "order": 120,
+        "actions": ["read", "manage"],
+    },
+    "integrations": {
+        "label": "Integrations",
+        "icon": "plug",
+        "route": "/integrations",
+        "order": 130,
+        "actions": ["read", "manage"],
+    },
     "platform": {
         "label": "Platform",
         "icon": "cloud",
