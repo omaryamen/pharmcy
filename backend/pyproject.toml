@@ -1,0 +1,101 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pharmacloud-backend"
+version = "0.1.0"
+description = "PharmaCloud ERP — enterprise multi-tenant SaaS pharmacy ERP backend (Django 5)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "PharmaCloud ERP" }]
+keywords = ["pharmacy", "erp", "django", "rest", "saas", "multi-tenant"]
+
+[tool.setuptools]
+packages = []
+
+# ======================================================================
+# Black
+# ======================================================================
+[tool.black]
+line-length = 119
+target-version = ["py310"]
+include = '\.pyi?$'
+extend-exclude = '''
+(
+  /migrations/ |
+  /staticfiles/ |
+  /media/
+)
+'''
+
+# ======================================================================
+# isort
+# ======================================================================
+[tool.isort]
+profile = "black"
+line_length = 119
+known_first_party = ["apps", "config"]
+default_section = "THIRDPARTY"
+skip = [".venv", "migrations"]
+
+# ======================================================================
+# Ruff
+# ======================================================================
+[tool.ruff]
+line-length = 119
+target-version = "py310"
+src = ["."]
+exclude = [
+  ".venv",
+  "venv",
+  "env",
+  ".git",
+  ".github",
+  ".tox",
+  ".nox",
+  "build",
+  "dist",
+  "*/migrations/*",
+  "*/staticfiles/*",
+  "*/media/*",
+]
+
+[tool.ruff.lint]
+# E/F/W: pycodestyle + pyflakes; I: isort; B: bugbear; UP: pyupgrade
+# C4: flake8-comprehensions; SIM: flake8-simplify; RET: return rules
+# ARG: unused arguments; PTH: pathlib
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM", "RET", "ARG", "PTH"]
+ignore = [
+  "E501",     # line length handled by black + ruff format
+  "B008",     # function call in default argument (allowed for DRF validators)
+  "ARG001",   # unused function argument (DRF/override signatures)
+  "ARG002",   # unused method argument (DRF view/permission signatures)
+  "ARG003",   # unused class-method argument (factory_boy hook signatures)
+  "ARG005",   # unused static-method argument
+  "SIM108",   # keep explicit if/else for readability in services
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "E501", "B011"]
+"*/migrations/*" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+# ======================================================================
+# Pytest
+# ======================================================================
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.testing"
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --tb=short"
+filterwarnings = [
+  "error",
+  "ignore::django.utils.deprecation.RemovedInDjango60Warning",
+]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]

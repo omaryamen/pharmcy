@@ -1,0 +1,9 @@
+# ======================================================================
+# PharmaCloud ERP — development dependencies
+# ======================================================================
+-r base.txt
+
+django-debug-toolbar~=4.4.0
+django-extensions~=3.2.0
+ipython~=8.30.0
+watchfiles~=1.0.0

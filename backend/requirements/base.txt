@@ -1,0 +1,32 @@
+# ======================================================================
+# PharmaCloud ERP — base runtime dependencies (all environments)
+# ======================================================================
+
+# --- Django core ---
+Django~=5.2.0
+# --- REST framework ---
+djangorestframework~=3.16.0
+djangorestframework-simplejwt[crypto]~=5.5.0
+drf-spectacular~=0.28.0
+django-filter~=25.1.0
+# --- Request/response & middleware ---
+django-cors-headers~=4.7.0
+whitenoise~=6.9.0
+# --- Configuration ---
+django-environ~=0.12.0
+# --- Database ---
+psycopg[binary]~=3.2.0
+# --- Redis / cache ---
+redis~=5.2.0
+# --- Celery (async tasks, scheduling, results) ---
+celery~=5.5.0
+django-celery-beat~=2.8.0
+django-celery-results~=2.5.0
+# --- Object storage (S3 / MinIO) ---
+django-storages~=1.14.5
+minio~=7.2.0
+boto3>=1.34,<2
+# --- Image handling (user avatars) ---
+Pillow~=11.1.0
+# --- ASGI/dev server ---
+uvicorn[standard]~=0.34.0
