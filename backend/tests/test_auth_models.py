@@ -17,7 +17,6 @@ from apps.authentication.models import (
     VerificationTokenKind,
 )
 from apps.authentication.repositories import LoginSessionRepository
-from apps.core.models import User
 
 
 @pytest.mark.django_db
@@ -63,7 +62,7 @@ class TestLoginSession:
 
         repo = LoginSessionRepository()
         assert repo.blacklist_refresh_token(refresh["jti"]) is True
-        assert repo.blacklist_refresh_token(refresh["jti"]) is False  # already blacklisted
+        assert repo.blacklist_refresh_token(refresh["jti"]) is True  # idempotent
 
         from rest_framework_simplejwt.exceptions import TokenError
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 
 from django.db import IntegrityError
+from rest_framework.exceptions import Throttled
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 
@@ -22,12 +23,12 @@ def normalize_errors(data) -> list[dict]:
     """Normalize DRF error payloads into [{'code', 'field', 'message'}]."""
     if isinstance(data, dict):
         # PharmaCloudError payload shape: {"code", "message", "field"?}.
-        if "code" in data and "message" in data:
+        if "code" in data and ("message" in data or "detail" in data):
             return [
                 {
                     "code": data["code"],
                     "field": data.get("field"),
-                    "message": data["message"],
+                    "message": data.get("message") or data.get("detail"),
                 }
             ]
         errors = []
@@ -75,6 +76,9 @@ def api_exception_handler(exc, context):
             response = Response({"detail": "Internal server error."}, status=500)
     elif response.status_code >= 500:
         logger.error("API %s response for %s: %s", response.status_code, type(exc).__name__, exc)
+
+    if isinstance(exc, Throttled):
+        response.data = {"detail": str(exc.detail), "code": "throttled"}
 
     response.data = normalize_errors(response.data)
     return response

@@ -6,8 +6,6 @@ import re
 
 from django.core import mail
 
-from apps.core.models import User
-
 OTP_RE = re.compile(r"\b\d{6}\b")
 
 

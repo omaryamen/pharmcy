@@ -25,5 +25,3 @@ class LoginSessionSerializer(serializers.ModelSerializer):
             "revoked_reason",
         )
         read_only_fields = fields
-
-    is_expired = serializers.ReadOnlyField(source="is_expired")

@@ -79,7 +79,6 @@ class AuthService:
     # ------------------------------------------------------------------
     # Login
     # ------------------------------------------------------------------
-    @transaction.atomic
     def login(
         self,
         *,
@@ -103,6 +102,8 @@ class AuthService:
         self._assert_can_login(user, request=request, ip_address=ip_address, user_agent=user_agent)
 
         if not user.check_password(password):
+            # Failure bookkeeping must persist even though the request errors,
+            # so it deliberately runs outside the success-path transaction.
             locked = user.register_failed_login(settings.AUTH_MAX_LOGIN_ATTEMPTS)
             record_login_failure(
                 self.events,
@@ -119,20 +120,21 @@ class AuthService:
                 raise AccountLockedError()
             raise InvalidCredentialsError()
 
-        self._on_login_success(user)
-        tokens = self._issue_tokens(user, remember_me=remember_me)
-        session = self.sessions.create_session(
-            user=user,
-            refresh_token_jti=tokens["refresh_jti"],
-            device_name=device_name,
-            device_type=device_type,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            remember_me=remember_me,
-            expires_at=tokens["expires_at"],
-        )
-        self._enforce_session_cap(user, keep=session)
-        record_login_success(self.events, user=user, request=request, session=session, ip_address=ip_address)
+        with transaction.atomic():
+            self._on_login_success(user)
+            tokens = self._issue_tokens(user, remember_me=remember_me)
+            session = self.sessions.create_session(
+                user=user,
+                refresh_token_jti=tokens["refresh_jti"],
+                device_name=device_name,
+                device_type=device_type,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                remember_me=remember_me,
+                expires_at=tokens["expires_at"],
+            )
+            self._enforce_session_cap(user, keep=session)
+            record_login_success(self.events, user=user, request=request, session=session, ip_address=ip_address)
 
         return {
             "access": tokens["access"],
@@ -213,6 +215,15 @@ class AuthService:
         try:
             old = RefreshToken(refresh_token)
         except TokenError as exc:
+            # SimpleJWT rejects blacklisted tokens while decoding; surface those
+            # as "revoked" (ledger + blacklist are both defence layers) and any
+            # other malformed/expired token as plain "invalid".
+            jti = None
+            payload = decode_payload_unverified(refresh_token or "")
+            if payload:
+                jti = payload.get(jwt_settings.JTI_CLAIM)
+            if jti and self.sessions.is_blacklisted(jti):
+                raise TokenRevokedError() from exc
             raise InvalidTokenError() from exc
 
         jti = old[jwt_settings.JTI_CLAIM]

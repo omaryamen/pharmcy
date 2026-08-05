@@ -25,6 +25,10 @@ class LoginSessionRepository(BaseRepository[LoginSession]):
     def get_active_by_jti(self, jti: str) -> LoginSession | None:
         return self.filter(refresh_token_jti=jti, is_active=True).select_related("user").first()
 
+    def is_blacklisted(self, jti: str) -> bool:
+        """Whether a refresh token JWT id was explicitly blacklisted."""
+        return BlacklistedToken.objects.filter(token__jti=jti).exists()
+
     # ------------------------------------------------------------------
     # Token blacklisting (defense-in-depth alongside the session ledger)
     # ------------------------------------------------------------------
