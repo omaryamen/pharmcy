@@ -76,6 +76,12 @@ LOCAL_APPS = [
     "apps.authentication.apps.AuthenticationConfig",
     "apps.rbac.apps.RbacConfig",
     "apps.tenants.apps.TenantsConfig",
+    "apps.companies.apps.CompaniesConfig",
+    "apps.branches.apps.BranchesConfig",
+    "apps.users.apps.UsersConfig",
+    "apps.medicines.apps.MedicinesConfig",
+    "apps.references.apps.ReferencesConfig",
+    "apps.suppliers.apps.SuppliersConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -364,6 +370,12 @@ SPECTACULAR_SETTINGS = {
         {"name": "auth", "description": "JWT authentication endpoints"},
         {"name": "rbac", "description": "Roles, permissions, assignments and effective-permission queries"},
         {"name": "tenants", "description": "Tenant lifecycle, profiles, settings, subscriptions, and domain routing"},
+        {"name": "companies", "description": "Legal business entities owned by tenants, operational settings and parameters"},
+        {"name": "branches", "description": "Physical pharmacy and warehouse branch locations, settings, manager assignments"},
+        {"name": "users", "description": "Enterprise user management, employee profiles, multi-branch assignment, role assignment"},
+        {"name": "medicines", "description": "Enterprise medicine master catalog, classifications, drug safety flags, barcode lookups"},
+        {"name": "references", "description": "Platform-wide pharmaceutical reference data (categories, manufacturers, dosage forms, UOMs, ATC, tax)"},
+        {"name": "suppliers", "description": "Enterprise supplier management, vendor profiles, contact info, licensing, risk rating"},
     ],
 }
 
