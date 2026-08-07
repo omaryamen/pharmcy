@@ -75,6 +75,7 @@ LOCAL_APPS = [
     "apps.core.apps.CoreConfig",
     "apps.authentication.apps.AuthenticationConfig",
     "apps.rbac.apps.RbacConfig",
+    "apps.tenants.apps.TenantsConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -362,6 +363,7 @@ SPECTACULAR_SETTINGS = {
         {"name": "health", "description": "Liveness & readiness probes"},
         {"name": "auth", "description": "JWT authentication endpoints"},
         {"name": "rbac", "description": "Roles, permissions, assignments and effective-permission queries"},
+        {"name": "tenants", "description": "Tenant lifecycle, profiles, settings, subscriptions, and domain routing"},
     ],
 }
 
