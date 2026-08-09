@@ -85,6 +85,7 @@ LOCAL_APPS = [
     "apps.customers.apps.CustomersConfig",
     "apps.warehouses.apps.WarehousesConfig",
     "apps.inventory.apps.InventoryConfig",
+    "apps.stock_movement.apps.StockMovementConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

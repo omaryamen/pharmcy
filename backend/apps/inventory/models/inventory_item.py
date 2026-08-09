@@ -58,6 +58,8 @@ class InventoryItem(FullAuditModel, TenantAwareModel):
         "inventory.Batch",
         on_delete=models.CASCADE,
         related_name="inventory_items",
+        null=True,
+        blank=True,
         verbose_name=_("Batch"),
         db_index=True,
     )
@@ -128,7 +130,8 @@ class InventoryItem(FullAuditModel, TenantAwareModel):
     def clean(self) -> None:
         super().clean()
         validate_inventory_location(self.storage_location, self.warehouse)
-        validate_inventory_batch(self.batch, self.medicine)
+        if self.batch_id:
+            validate_inventory_batch(self.batch, self.medicine)
         validate_quantity_non_negative(self.on_hand_quantity, "On hand quantity")
         validate_quantity_non_negative(self.reserved_quantity, "Reserved quantity")
         validate_quantity_non_negative(self.damaged_quantity, "Damaged quantity")

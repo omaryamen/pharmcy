@@ -57,7 +57,7 @@ class InventoryService:
             warehouse_id=warehouse.id,
             storage_location_id=storage_location.id,
             medicine_id=medicine.id,
-            batch_id=batch.id,
+            batch_id=batch.id if batch else None,
         )
 
         if not item:

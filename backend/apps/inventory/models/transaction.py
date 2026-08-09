@@ -57,6 +57,8 @@ class InventoryTransaction(FullAuditModel, TenantAwareModel):
         "inventory.Batch",
         on_delete=models.CASCADE,
         related_name="inventory_transactions",
+        null=True,
+        blank=True,
         verbose_name=_("Batch"),
         db_index=True,
     )

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.12.0] - 2026-08-09
+
+### Added - Enterprise Stock Movement Engine (`apps.stock_movement` / `IMP-017`)
+- **Authoritative Stock Movement Engine**: Implemented `StockMovementEngine` executing double-entry inventory quantity modifications atomically inside `@transaction.atomic` blocks with `select_for_update()` pessimistic DB row locking.
+- **Movement Types & Statuses**: Complete support for `OPENING_BALANCE`, `RECEIPT`, `ISSUE`, `SALE`, `SALE_RETURN`, `PURCHASE_RETURN`, `TRANSFER_OUT`, `TRANSFER_IN`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`, `DAMAGE`, `EXPIRY`, `QUARANTINE`, `QUARANTINE_RELEASE`, `RESERVATION`, `RESERVATION_RELEASE`, `CORRECTION`, `RECALL`, `OTHER`.
+- **Reversal Engine**: Implemented `reverse_movement(...)` creating compensating reversal movements, reversing line quantities, and preventing duplicate reversals.
+- **FEFO Batch Allocation & Idempotency**: Automatic FEFO batch selection for outgoing issues/sales when unspecified, and tenant-scoped `idempotency_key` duplicate protection.
+- **Sequence Generator**: Collision-safe document sequence code generator (`STK-2026-XXXXXX`, `TRF-2026-XXXXXX`, `REC-2026-XXXXXX`, `ISS-2026-XXXXXX`).
+- **REST APIs**: Published endpoints under `/api/v1/stock-movements/` for CRUD, status processing (`/process/`, `/cancel/`, `/reverse/`), operational shortcuts (`/receive/`, `/issue/`, `/transfer/`), traceability reporting (`/traceability/`), and movement stats (`/stats/`).
+- **Automated Test Suite**: Added `test_stock_movement_models.py`, `test_stock_movement_engine.py`, `test_stock_movement_concurrency.py`, `test_stock_movement_selectors.py`, `test_stock_movement_api.py`, and `test_stock_movement_isolation.py` (368 total tests passing, 100% pass rate).
+
+---
+
 ## [1.11.0] - 2026-08-09
 
 ### Added - Enterprise Inventory & Batch Management (`apps.inventory` / `IMP-016`)

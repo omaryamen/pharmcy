@@ -30,11 +30,13 @@ class InventoryStatus(models.TextChoices):
 class TransactionType(models.TextChoices):
     OPENING_BALANCE = "opening_balance", _("Opening Balance")
     RECEIPT = "receipt", _("Goods Receipt")
+    ISSUE = "issue", _("Stock Issue")
     SALE = "sale", _("POS / Sales Issue")
     SALE_RETURN = "sale_return", _("Sales Return")
     PURCHASE_RETURN = "purchase_return", _("Purchase Return")
     TRANSFER_IN = "transfer_in", _("Transfer In")
     TRANSFER_OUT = "transfer_out", _("Transfer Out")
+    ADJUSTMENT = "adjustment", _("Stock Adjustment")
     ADJUSTMENT_INCREASE = "adjustment_increase", _("Stock Adjustment (+)")
     ADJUSTMENT_DECREASE = "adjustment_decrease", _("Stock Adjustment (-)")
     DAMAGE = "damage", _("Damaged Stock")
