@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.11.0] - 2026-08-09
+
+### Added - Enterprise Inventory & Batch Management (`apps.inventory` / `IMP-016`)
+- **Pharmaceutical Batch Engine**: Implemented `Batch` entity (`FullAuditModel`, `TenantAwareModel`) supporting batch number, lot number, manufacturing date, expiry date, registration number, country of origin, unit cost, selling price, storage requirements, and compliance status (`active`, `quarantine`, `expired`, `recalled`, `blocked`, `depleted`, `archived`).
+- **Stock Position Balance Engine**: Implemented `InventoryItem` representing stock position of a medicine batch at a storage location within a warehouse. Enforces Decimal precision, non-negative quantity check constraints, available quantity calculation (`on_hand - reserved - damaged - quarantine`), unit cost, average cost (weighted average calculation), and last cost tracking.
+- **Concurrency & Thread Safety**: Concurrency-safe service methods implementing `transaction.atomic` and pessimistic DB row locks (`select_for_update`) during quantity adjustments, reservations, and reservation releases to prevent race conditions or negative stock.
+- **FEFO & Recall Readiness**: `BatchSelector.get_available_batches_fefo()` for First Expired First Out selection, and `InventoryItemSelector.find_inventory_for_recall()` for cross-warehouse recall lookup.
+- **Auditable Transactions**: Implemented `InventoryTransaction` recording all quantity-changing stock movements with quantity before/after, user accountability, and reference tracking.
+- **REST APIs**: Published endpoints under `/api/v1/inventory/`, `/api/v1/batches/`, and `/api/v1/inventory-transactions/` for CRUD, status management (`/block/`, `/unblock/`, `/recall/`), stock adjustments (`/adjust/`), stock reservations (`/reserve/`), inventory summary (`/summary/`), FEFO lookup (`/fefo/`), and recall lookup (`/recall-lookup/`).
+- **Automated Test Suite**: Added `test_inventory_models.py`, `test_inventory_services.py`, `test_inventory_concurrency.py`, `test_inventory_selectors.py`, `test_inventory_api.py`, and `test_inventory_isolation.py` (358 total tests passing, 100% pass rate).
+
+---
+
+## [1.10.0] - 2026-08-08
+
+### Added - Enterprise Warehouse & Storage Location Management (`apps.warehouses` / `IMP-015`)
+- **Warehouse Entity & Domain**: Implemented `Warehouse` entity (`FullAuditModel`, `TenantAwareModel`) supporting code, name, names in Arabic/English, warehouse types (`main`, `pharmacy`, `branch`, `distribution_center`, `cold_storage`, `controlled_drug`, `quarantine`, `returns`, `damaged`, `transit`, `virtual`, `other`), status lifecycle (`draft`, `active`, `inactive`, `suspended`, `temporarily_closed`, `archived`), tenant, company, optional branch, manager assignment validation, contact info, geolocation, working hours, and default storage role flags.
+- **Hierarchical Storage Location Engine**: Implemented `StorageLocation` entity supporting recursive depth (Warehouse → Zone → Aisle → Rack → Shelf → Bin / Cabinet / Freezer / Room), status lifecycle (`active`, `inactive`, `maintenance`, `blocked`, `full`), capacity & current utilization foundation, environmental control parameters (temperature range, humidity range), and storage conditions.
+- **Hierarchy Integrity & Validation**: Full breadcrumb pathing (`get_full_path()`), prevention of circular parentage, and strict cross-warehouse parent assignment enforcement.
+- **REST APIs**: Published endpoints under `/api/v1/warehouses/` and `/api/v1/storage-locations/` for CRUD, filtering, search, status transitions (`/activate/`, `/deactivate/`, `/suspend/`, `/close-temporarily/`, `/restore/`), manager assignment (`/assign-manager/`), fast lookup (`/search/`), statistics (`/stats/`), location tree representation (`/tree/`), and location move operations (`/move/`).
+- **Automated Test Suite**: Added `test_warehouses_models.py`, `test_warehouses_hierarchy.py`, `test_warehouses_services.py`, `test_warehouses_api.py`, and `test_warehouses_isolation.py` (346 total tests passing, 100% pass rate).
+
+---
+
+## [1.9.0] - 2026-08-08
+
+### Added - Enterprise Customer Management (`apps.customers` / `IMP-014` / `P008`)
+- **Customer Identity & Domain Model**: Implemented `Customer` entity (`FullAuditModel`, `TenantAwareModel`) supporting code, customer number, customer type (`individual`, `organization`, `corporate`, `insurance`, `walk_in`, `anonymous`), status (`active`, `inactive`, `blocked`, `suspended`, `archived`), names (Arabic, English, preferred), personal information (gender, DOB, national ID, passport, nationality, occupation, photo), contacts, preferences, financial profile (credit limit, opening/current balance, credit status, terms, discount eligibility), classification, loyalty foundation, and insurance coverage foundation.
+- **Multi-Address Support**: Implemented `CustomerAddress` entity supporting home, work, billing, delivery and custom address types with primary/default switching and geolocation (latitude/longitude/Google Maps URL).
+- **Customer Medical Profile Foundation**: Implemented `CustomerMedicalProfile` supporting blood type, allergies, chronic conditions, emergency contact, physician/pharmacy preferences, and insurance notes with restricted access permissions (`customers.medical_profile.read`, `customers.medical_profile.update`).
+- **Duplicate Detection Engine**: Non-destructive `CustomerDuplicateDetector` scoring phone, email, national ID, passport, insurance member number, and name similarity.
+- **REST APIs**: Published endpoints under `/api/v1/customers/` for CRUD, filtering, search, status transitions (`/activate/`, `/deactivate/`, `/block/`, `/unblock/`, `/suspend/`, `/restore/`), fast lookup (`/search/`), duplicate detection (`/duplicates/`), statistics (`/stats/`), addresses (`/addresses/`), and medical profiles (`/medical-profile/`).
+- **Automated Test Suite**: Added `test_customers_models.py`, `test_customers_services.py`, `test_customers_api.py`, `test_customers_isolation.py`, and `test_customers_duplicate.py` (336 total tests passing, 100% pass rate).
+
+---
+
 ## [1.8.0] - 2026-08-07
 
 ### Added - Enterprise Supplier Management (`apps.suppliers` / `IMP-013`)

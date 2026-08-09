@@ -82,6 +82,9 @@ LOCAL_APPS = [
     "apps.medicines.apps.MedicinesConfig",
     "apps.references.apps.ReferencesConfig",
     "apps.suppliers.apps.SuppliersConfig",
+    "apps.customers.apps.CustomersConfig",
+    "apps.warehouses.apps.WarehousesConfig",
+    "apps.inventory.apps.InventoryConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -376,6 +379,12 @@ SPECTACULAR_SETTINGS = {
         {"name": "medicines", "description": "Enterprise medicine master catalog, classifications, drug safety flags, barcode lookups"},
         {"name": "references", "description": "Platform-wide pharmaceutical reference data (categories, manufacturers, dosage forms, UOMs, ATC, tax)"},
         {"name": "suppliers", "description": "Enterprise supplier management, vendor profiles, contact info, licensing, risk rating"},
+        {"name": "customers", "description": "Enterprise customer management, identity, addresses, medical & financial profiles, duplicate detection"},
+        {"name": "warehouses", "description": "Enterprise warehouse and storage location management, physical/virtual storage, hierarchical locations, conditions, capacity"},
+        {"name": "storage-locations", "description": "Hierarchical storage location trees, zones, aisles, racks, shelves, bins, environmental controls"},
+        {"name": "inventory", "description": "Enterprise inventory stock positions, available/reserved/damaged quantities, costing, stock adjustments"},
+        {"name": "batches", "description": "Pharmaceutical batch/lot tracking, manufacturing & expiry dates, FEFO readiness, compliance status"},
+        {"name": "inventory-transactions", "description": "Auditable stock movement logs, stock changes, traceability history"},
     ],
 }
 

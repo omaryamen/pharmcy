@@ -26,6 +26,12 @@ urlpatterns = [
     path("api/v1/medicines/", include("apps.medicines.api.urls")),
     path("api/v1/references/", include("apps.references.api.urls")),
     path("api/v1/suppliers/", include("apps.suppliers.api.urls")),
+    path("api/v1/customers/", include("apps.customers.api.urls")),
+    path("api/v1/warehouses/", include("apps.warehouses.api.urls")),
+    path("api/v1/storage-locations/", include("apps.warehouses.api.urls_locations")),
+    path("api/v1/inventory/", include("apps.inventory.api.urls")),
+    path("api/v1/batches/", include("apps.inventory.api.urls_batches")),
+    path("api/v1/inventory-transactions/", include("apps.inventory.api.urls_transactions")),
     # OpenAPI schema & documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),

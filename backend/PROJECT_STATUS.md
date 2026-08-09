@@ -15,12 +15,12 @@
 | **P001 / DASH** | Dashboard | Unstarted | 0% | 0% | - |
 | **P002 / MED** | Enterprise Medicine Master Catalog | **Completed** | 100% | 100% | 100% |
 | **P002 / REF** | Enterprise Pharmaceutical Reference Data Engine | **Completed** | 100% | 100% | 100% |
-| **P003 / INV** | Inventory | Unstarted | 0% | 0% | - |
+| **P003 / INV** | Enterprise Inventory & Batch Management | **Completed** | 100% | 100% | 100% |
 | **P004 / POS** | Point of Sale (POS) | Unstarted | 0% | 0% | - |
 | **P005 / SAL** | Sales Management | Unstarted | 0% | 0% | - |
 | **P006 / PUR** | Purchasing & Procurement | Unstarted | 0% | 0% | - |
 | **P007 / SUP** | Enterprise Supplier Management | **Completed** | 100% | 100% | 100% |
-| **P008 / CUS** | Customers | Unstarted | 0% | 0% | - |
+| **P008 / CUS** | Enterprise Customer Management | **Completed** | 100% | 100% | 100% |
 | **P009 / RX** | Prescriptions | Unstarted | 0% | 0% | - |
 | **P010 / ACC** | Accounting | Unstarted | 0% | 0% | - |
 | **P011 / RPT** | Reports | Unstarted | 0% | 0% | - |
@@ -75,18 +75,28 @@
 - **Supplier Profile & Domain**: `Supplier` model (`UUIDBase`, `FullAuditModel`, `TenantAwareModel`) supporting code, legal name, display name, supplier type, category, registration number, tax number, VAT number, and status (`active`, `inactive`, `suspended`, `blacklisted`, `archived`).
 - **Contact, Geolocation & Financial Data**: Primary/secondary contacts, multi-channel phone/WhatsApp/mobile/email, physical address & geolocation (lat/long, Google Maps link), financial parameters (currency, payment terms, credit limit, balances, bank account, IBAN, SWIFT, tax category).
 - **Licensing & Compliance Rating**: Commercial registration, drug license, license expiry dates, insurance info, preferred supplier flag, blacklisted flag, 5-star rating, and risk level (`low`, `medium`, `high`, `critical`).
-- **REST APIs**: Published endpoints under `/api/v1/suppliers/` for CRUD, filtering, search, activate (`/activate/`), suspend (`/suspend/`), blacklist (`/blacklist/`), restore (`/restore/`), bulk import (`/import/`), export (`/export/`), and statistics (`/stats/`).
+### Enterprise Warehouse & Storage Location Management (`apps.warehouses` / `IMP-015`)
+- **Warehouse Entity & Domain**: `Warehouse` entity supporting code, name, names in Arabic/English, types (`main`, `pharmacy`, `branch`, `distribution_center`, `cold_storage`, `controlled_drug`, `quarantine`, `returns`, `damaged`, `transit`, `virtual`, `other`), status lifecycle (`draft`, `active`, `inactive`, `suspended`, `temporarily_closed`, `archived`), tenant, company, optional branch link, manager assignment validation, contact info, geolocation, working hours, and default storage role flags.
+- **Hierarchical Storage Location Engine**: `StorageLocation` supporting recursive depth (Warehouse → Zone → Aisle → Rack → Shelf → Bin / Cabinet / Freezer / Room), status lifecycle (`active`, `inactive`, `maintenance`, `blocked`, `full`), capacity & current utilization foundation, environmental control parameters (temperature range, humidity range), and storage conditions.
+- **Hierarchy Integrity & Validation**: Full breadcrumb pathing (`get_full_path()`), prevention of circular parentage, and strict cross-warehouse parent assignment enforcement.
+### Enterprise Inventory & Batch Management (`apps.inventory` / `IMP-016`)
+- **Pharmaceutical Batch Engine**: `Batch` entity (`FullAuditModel`, `TenantAwareModel`) supporting batch number, lot number, manufacturing date, expiry date, registration number, country of origin, unit cost, selling price, storage requirements, and compliance status (`active`, `quarantine`, `expired`, `recalled`, `blocked`, `depleted`, `archived`).
+- **Stock Position Balance Engine**: `InventoryItem` representing stock position of a medicine batch at a storage location within a warehouse. Enforces Decimal precision, non-negative quantity check constraints, available quantity calculation (`on_hand - reserved - damaged - quarantine`), unit cost, average cost (weighted average calculation), and last cost tracking.
+- **Concurrency & Thread Safety**: Concurrency-safe service methods implementing `transaction.atomic` and pessimistic DB row locks (`select_for_update`) during quantity adjustments, reservations, and reservation releases to prevent race conditions or negative stock.
+- **FEFO & Recall Readiness**: `BatchSelector.get_available_batches_fefo()` for First Expired First Out selection, and `InventoryItemSelector.find_inventory_for_recall()` for cross-warehouse recall lookup.
+- **Auditable Transactions**: `InventoryTransaction` recording all quantity-changing stock movements with quantity before/after, user accountability, and reference tracking.
+- **REST APIs**: Published endpoints under `/api/v1/inventory/`, `/api/v1/batches/`, and `/api/v1/inventory-transactions/` for CRUD, status management (`/block/`, `/unblock/`, `/recall/`), stock adjustments (`/adjust/`), stock reservations (`/reserve/`), inventory summary (`/summary/`), FEFO lookup (`/fefo/`), and recall lookup (`/recall-lookup/`).
 
 ---
 
 ## 3. Next Recommended Module
 
-**Module Code:** `IMP-014` — **Enterprise Customer Management** (`apps.customers` / `P008`)
+**Module Code:** `IMP-017` — **Enterprise Stock Movement Engine** (`apps.stock_movement`)
 
 ---
 
 ## 4. Test Verification Log
 
 ```bash
-============================= 331 passed in 34.61s =============================
+============================= 358 passed in 48.12s =============================
 ```

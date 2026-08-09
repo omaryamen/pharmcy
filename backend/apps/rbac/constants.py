@@ -73,6 +73,10 @@ MODULE_SPECS: dict[str, dict[str, Any]] = {
         "route": "/customers",
         "order": 70,
         "actions": ["read", "create", "update", "delete"],
+        "resources": {
+            "customer": ["read", "create", "update", "delete"],
+            "medical_profile": ["read", "update"],
+        },
     },
     "suppliers": {
         "label": "Suppliers",
@@ -80,6 +84,29 @@ MODULE_SPECS: dict[str, dict[str, Any]] = {
         "route": "/suppliers",
         "order": 80,
         "actions": ["read", "create", "update", "delete"],
+    },
+    "warehouses": {
+        "label": "Warehouses",
+        "icon": "warehouse",
+        "route": "/warehouses",
+        "order": 85,
+        "actions": ["read", "create", "update", "delete"],
+        "resources": {
+            "warehouse": ["read", "create", "update", "delete", "manage"],
+            "location": ["read", "create", "update", "delete"],
+        },
+    },
+    "inventory": {
+        "label": "Inventory & Batches",
+        "icon": "box",
+        "route": "/inventory",
+        "order": 90,
+        "actions": ["read", "create", "update", "delete", "adjust"],
+        "resources": {
+            "stock": ["read", "create", "update", "delete"],
+            "batch": ["read", "create", "update", "block", "recall"],
+            "transaction": ["read"],
+        },
     },
     "pharmacy": {
         "label": "Pharmacy",
