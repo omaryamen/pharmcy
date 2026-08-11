@@ -201,10 +201,10 @@ class AuthService:
 
     def _enforce_session_cap(self, user: User, *, keep) -> None:
         max_sessions = settings.AUTH_MAX_ACTIVE_SESSIONS
-        active = self.sessions.active_for_user(user).order_by("created_at")
-        excess = active.count() - max_sessions
+        active_list = list(self.sessions.active_for_user(user).order_by("created_at"))
+        excess = len(active_list) - max_sessions
         if excess > 0:
-            for stale in active[:excess]:
+            for stale in active_list[:excess]:
                 self.sessions.revoke(stale, reason=SessionRevokeReason.EXPIRED)
 
     # ------------------------------------------------------------------

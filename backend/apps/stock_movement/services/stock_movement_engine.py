@@ -341,6 +341,36 @@ class StockMovementEngine:
                     performed_by=user,
                 )
 
+            # Stock Quarantine
+            elif m_type == MovementType.QUARANTINE:
+                wh = movement.source_warehouse or movement.warehouse
+                target_loc = src_loc or movement.source_location
+                inv_item = self.inventory_service.get_or_create_inventory_item(
+                    tenant=tenant, company=movement.company, warehouse=wh, storage_location=target_loc, medicine=med, batch=batch
+                )
+                self.inventory_service.quarantine_stock(
+                    tenant=tenant,
+                    inventory_item_id=str(inv_item.pk),
+                    quarantine_quantity=qty,
+                    reference_number=movement.movement_number,
+                    performed_by=user,
+                )
+
+            # Quarantine Release
+            elif m_type == MovementType.QUARANTINE_RELEASE:
+                wh = movement.source_warehouse or movement.warehouse
+                target_loc = src_loc or movement.source_location
+                inv_item = self.inventory_service.get_or_create_inventory_item(
+                    tenant=tenant, company=movement.company, warehouse=wh, storage_location=target_loc, medicine=med, batch=batch
+                )
+                self.inventory_service.release_quarantine(
+                    tenant=tenant,
+                    inventory_item_id=str(inv_item.pk),
+                    release_quantity=qty,
+                    reference_number=movement.movement_number,
+                    performed_by=user,
+                )
+
         movement.mark_completed(user=user)
         logger.info("Processed stock movement %s (%s)", movement.movement_number, m_type)
         return movement

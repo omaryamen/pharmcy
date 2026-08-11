@@ -87,6 +87,10 @@ LOCAL_APPS = [
     "apps.inventory.apps.InventoryConfig",
     "apps.stock_movement.apps.StockMovementConfig",
     "apps.stock_adjustment.apps.StockAdjustmentConfig",
+    "apps.stock_transfer.apps.StockTransferConfig",
+    "apps.alerts.apps.AlertsConfig",
+    "apps.procurement.apps.ProcurementConfig",
+    "apps.goods_receipt.apps.GoodsReceiptConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

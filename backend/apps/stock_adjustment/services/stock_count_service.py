@@ -146,11 +146,9 @@ class StockCountService:
                 medicine=item.medicine,
                 batch=item.batch,
                 storage_location=item.storage_location,
-                unit=item.medicine.primary_uom.code if hasattr(item.medicine, "primary_uom") and item.medicine.primary_uom else "Pcs",
                 unit_cost=item.unit_cost,
                 snapshot_quantity=item.on_hand_quantity,
-                counted_quantity=None,
-                count_status="PENDING",
+                counted_quantity=Decimal("0.0000"),
             )
 
         self._record_history(tenant, stock_count, "STARTED", user, {"snapshot_items_count": len(items)})
@@ -165,32 +163,74 @@ class StockCountService:
         lines_data: list[dict[str, Any]],
         user: Any | None = None,
     ) -> StockCount:
-        """Record physical counted quantities for lines in a stock count."""
+        """Record physical counted quantities for lines in a stock count.
+
+        Each entry may identify a line by ``line_id`` (UUID) or by the
+        combination of ``medicine_id``, ``batch_id`` and ``storage_location_id``.
+        If no matching line exists a new one is created (ad-hoc line entry).
+        """
         if stock_count.count_status not in [CountStatus.IN_PROGRESS, CountStatus.RECOUNT_REQUIRED]:
             raise InvalidCountStateError(f"Cannot record count lines when count status is {stock_count.count_status}.")
 
         now = timezone.now()
-        line_map = {str(l.pk): l for l in stock_count.lines.all()}
 
         for entry in lines_data:
-            line_id = str(entry["line_id"])
             counted_qty = validate_non_negative_quantity(entry["counted_quantity"])
+            unit_cost = Decimal(str(entry.get("unit_cost", "0.0000")))
+            notes_text = entry.get("notes", "")
 
-            if line_id in line_map:
-                line = line_map[line_id]
+            line = None
+
+            # Strategy 1: lookup by explicit line_id
+            if "line_id" in entry:
+                line = StockCountLine.objects.filter(tenant=tenant, stock_count=stock_count, pk=entry["line_id"]).first()
+
+            # Strategy 2: lookup by medicine + batch + location composite key
+            if line is None and "medicine_id" in entry:
+                filter_kwargs: dict[str, Any] = {
+                    "tenant": tenant,
+                    "stock_count": stock_count,
+                    "medicine_id": entry["medicine_id"],
+                    "storage_location_id": entry.get("storage_location_id"),
+                }
+                if entry.get("batch_id"):
+                    filter_kwargs["batch_id"] = entry["batch_id"]
+                else:
+                    filter_kwargs["batch__isnull"] = True
+
+                line = StockCountLine.objects.filter(**filter_kwargs).first()
+
+                # Create an ad-hoc line if not yet snapshotted
+                if line is None:
+                    line = StockCountLine.objects.create(
+                        tenant=tenant,
+                        stock_count=stock_count,
+                        medicine_id=entry["medicine_id"],
+                        batch_id=entry.get("batch_id"),
+                        storage_location_id=entry.get("storage_location_id"),
+                        snapshot_quantity=Decimal("0.0000"),
+                        counted_quantity=counted_qty,
+                        unit_cost=unit_cost,
+                        counted_by=user,
+                        notes=notes_text,
+                    )
+                    continue
+
+            if line is not None:
                 line.counted_quantity = counted_qty
                 line.counted_by = user
-                line.counted_at = now
-                line.count_status = "COUNTED"
-                if "notes" in entry:
-                    line.notes = entry["notes"]
-                line.save()
+                if unit_cost:
+                    line.unit_cost = unit_cost
+                if notes_text:
+                    line.notes = notes_text
+                line.save(update_fields=["counted_quantity", "counted_by", "unit_cost", "notes", "updated_at"])
 
         stock_count.updated_at = now
         stock_count.save(update_fields=["updated_at"])
 
         logger.info("Recorded %d count lines for stock count %s", len(lines_data), stock_count.count_number)
         return stock_count
+
 
     @transaction.atomic
     def submit_stock_count(self, tenant: Any, stock_count: StockCount, user: Any | None = None) -> StockCount:
@@ -260,9 +300,9 @@ class StockCountService:
                 reason=reason,
                 recount_status=RecountStatus.REQUESTED,
             )
-            line.recount_requested = True
-            line.count_status = "RECOUNT_REQUIRED"
-            line.save(update_fields=["recount_requested", "count_status", "updated_at"])
+            line.requires_recount = True
+            line.recount_reason = reason
+            line.save(update_fields=["requires_recount", "recount_reason", "updated_at"])
 
         stock_count.count_status = CountStatus.RECOUNT_REQUIRED
         stock_count.save(update_fields=["count_status", "updated_at"])
@@ -383,8 +423,6 @@ class StockCountService:
                     auto_process=True,
                 )
 
-            line.count_status = "RECONCILED"
-            line.save(update_fields=["count_status", "updated_at"])
 
         stock_count.count_status = CountStatus.RECONCILED
         stock_count.reconciled_at = now

@@ -62,12 +62,14 @@ class VarianceDirection(models.TextChoices):
 
 
 class SessionStatus(models.TextChoices):
+    PENDING = "pending", _("Pending Session")
     ACTIVE = "active", _("Active Session")
     COMPLETED = "completed", _("Completed Session")
     CANCELLED = "cancelled", _("Cancelled Session")
 
 
 class RecountStatus(models.TextChoices):
+    PENDING = "pending", _("Recount Pending")
     REQUESTED = "requested", _("Recount Requested")
     IN_PROGRESS = "in_progress", _("Recount In Progress")
     COMPLETED = "completed", _("Recount Completed")

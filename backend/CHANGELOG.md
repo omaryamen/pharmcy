@@ -7,9 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.12.0] - 2026-08-09
+## [1.17.0] - 2026-08-11
 
-### Added - Enterprise Stock Movement Engine (`apps.stock_movement` / `IMP-017`)
+### Added - Enterprise Goods Receipt & Receiving Management (`apps.goods_receipt` / `IMP-022`)
+- **Physical Goods Receiving Engine**: Created `GoodsReceipt` and `GoodsReceiptLine` models (`GRN-YYYY-XXXXXX`) supporting draft receiving, quality status checks, cold chain temperature excursion tracking, and PO matching.
+- **Batch Management Integration**: Automatic `Batch` creation/reuse with expiry date validation and recalled/blocked batch rejection.
+- **Authoritative Stock Movement Posting Engine**: Implemented `post_goods_receipt` executing physical stock entries strictly through `StockMovementEngine` (`RECEIPT` / `QUARANTINE` / `DAMAGE`) with zero direct quantity mutations.
+- **PO Quantity Reconciliation & Reversals**: Reconciles PO line quantities, updates PO statuses (`PARTIALLY_RECEIVED`, `FULLY_RECEIVED`), and supports compensating `reverse_goods_receipt` workflows.
+- **REST APIs & Test Suite**: Published endpoints under `/api/v1/goods-receipts/` and created `tests/test_goods_receipt.py` (450 total tests passing, 100% pass rate).
+
+---
+
+## [1.16.0] - 2026-08-11
+
+### Added - Enterprise Purchasing & Purchase Order Management (`apps.procurement` / `IMP-021`)
+- **Purchase Requisition Engine**: Created `PurchaseRequisition` and `PurchaseRequisitionLine` models (`PR-YYYY-XXXXXX`) managing internal purchase requests (`DRAFT` -> `SUBMITTED` -> `APPROVED` / `REJECTED`).
+- **Purchase Order Engine**: Created `PurchaseOrder` and `PurchaseOrderLine` models (`PO-YYYY-XXXXXX`) for supplier commitments (`DRAFT` -> `PENDING_APPROVAL` -> `APPROVED` -> `SENT_TO_SUPPLIER` -> `ACKNOWLEDGED` -> `PARTIALLY_RECEIVED` -> `FULLY_RECEIVED` -> `CLOSED`). Zero direct inventory mutation.
+- **Requisition to PO Conversion Engine**: Implemented `convert_requisition_to_purchase_order` service converting approved requisitions into POs grouped by supplier with row-locking idempotency protection.
+- **Controlled Amendments & Separation of Duties**: Created `PurchaseOrderAmendment` audit model for approved order modifications and enforced creator != approver separation of duties.
+- **REST APIs & Test Suite**: Published endpoints under `/api/v1/purchase-requisitions/`, `/api/v1/purchase-orders/`, `/api/v1/supplier-prices/`, and created `tests/test_procurement.py`.
+
+---
+
+## [1.15.0] - 2026-08-11
+
+### Added - Enterprise Expiry, Recall & Inventory Alert Management (`apps.alerts` / `IMP-020`)
+- **Alert Scanner Engine**: Implemented `AlertScannerService` scanning active inventory balances and pharmaceutical batch expiry dates, generating/updating real-time `InventoryAlert` records for low stock, out of stock, near expiry (30/60/90 days), and expired stock.
+- **Batch Recall & Auto-Quarantine Engine**: Implemented `BatchRecallService` managing formal pharmaceutical recall orders (`RCL-YYYY-XXXXXX`), setting batch status to `RECALLED`, and executing automated stock quarantining across all storage locations via `StockMovementEngine` (`QUARANTINE` movement type).
+- **Acknowledgment & Resolution Lifecycle**: Complete lifecycle tracking (`ACTIVE` → `ACKNOWLEDGED` → `RESOLVED` / `DISMISSED`) with user accountability and resolution notes.
+- **REST APIs & Document Generation**: Implemented ViewSets, serializers, and URL routing under `/api/v1/alerts/` and `/api/v1/recalls/` with sequential number generation (`ALT-YYYY-XXXXXX`, `RCL-YYYY-XXXXXX`).
+- **Automated Test Suite**: Created `tests/test_alerts.py` covering models, `AlertScannerService`, `BatchRecallService`, automatic stock quarantining via `StockMovementEngine`, alert acknowledgment, resolution, selectors, statistics, and tenant isolation (428 total tests passing, 100% pass rate).
+
+---
+
+## [1.14.0] - 2026-08-09
+
+### Added - Enterprise Inter-Branch & Warehouse Stock Transfer (`apps.stock_transfer` / `IMP-019`)
+- **Stock Transfer Workflow Engine**: Implemented `StockTransferService` managing the complete transfer lifecycle: `DRAFT` → `REQUESTED` → `APPROVED` → `PICKING` → `READY_FOR_DISPATCH` → `DISPATCHED` / `IN_TRANSIT` → `RECEIVED` / `PARTIALLY_RECEIVED` / `DISCREPANCY` → `CLOSED`.
+- **FEFO-Aware Stock Picking**: Implemented automatic FEFO batch selection for transfer lines without specified batches, filtering out expired, recalled, or quarantined lots.
+- **Atomic Double-Entry Dispatch & Receiving**: Integrated with `StockMovementEngine` to generate authoritative double-entry movements (`TRANSFER_OUT` and `TRANSFER_IN`) with zero direct inventory balance mutations.
+- **Discrepancy & Damage Tracking Engine**: Automated discrepancy record creation (`StockTransferDiscrepancy`) for quantity shortages, overages, damaged goods during transit (`DAMAGE` movements), wrong batch, and wrong medicine delivery.
+- **Separation of Duties & Reversal System**: Enforced separation of duties between transfer requester and approver. Implemented clean compensating double-entry reversals (`reverse_transfer`) preventing double reversals.
+- **REST APIs & Document Generation**: Implemented ViewSets, serializers, and URL routing under `/api/v1/stock-transfers/` and `/api/v1/transfer-discrepancies/` with sequential number generation (`TRF-YYYY-XXXXXX`, `DISC-YYYY-XXXXXX`).
+- **Automated Test Suite**: Created `tests/test_stock_transfer.py` covering models, service workflow lifecycle, FEFO picking, dispatching, receiving, partial receiving, discrepancies, damage, wrong batch/medicine, cancellation, reversal, idempotency, tenant isolation, and selectors (416 total tests passing, 100% pass rate).
+
+---
+
+## [1.13.0] - 2026-08-09
+
+### Added - Enterprise Stock Adjustment & Stock Count (`apps.stock_adjustment` / `IMP-018`)
 - **Authoritative Stock Movement Engine**: Implemented `StockMovementEngine` executing double-entry inventory quantity modifications atomically inside `@transaction.atomic` blocks with `select_for_update()` pessimistic DB row locking.
 - **Movement Types & Statuses**: Complete support for `OPENING_BALANCE`, `RECEIPT`, `ISSUE`, `SALE`, `SALE_RETURN`, `PURCHASE_RETURN`, `TRANSFER_OUT`, `TRANSFER_IN`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`, `DAMAGE`, `EXPIRY`, `QUARANTINE`, `QUARANTINE_RELEASE`, `RESERVATION`, `RESERVATION_RELEASE`, `CORRECTION`, `RECALL`, `OTHER`.
 - **Reversal Engine**: Implemented `reverse_movement(...)` creating compensating reversal movements, reversing line quantities, and preventing duplicate reversals.

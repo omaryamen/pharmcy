@@ -31,7 +31,6 @@ class StockCountLineSerializer(serializers.ModelSerializer):
             "batch_number",
             "storage_location",
             "storage_location_code",
-            "unit",
             "unit_cost",
             "snapshot_quantity",
             "counted_quantity",
@@ -39,13 +38,11 @@ class StockCountLineSerializer(serializers.ModelSerializer):
             "variance_percentage",
             "variance_cost",
             "variance_direction",
-            "count_status",
+            "requires_recount",
+            "recount_reason",
             "counted_by",
             "counted_by_name",
-            "counted_at",
             "notes",
-            "recount_requested",
-            "recount_quantity",
             "created_at",
         ]
         read_only_fields = ["id", "variance_direction", "created_at"]
@@ -63,7 +60,7 @@ class StockCountLineSerializer(serializers.ModelSerializer):
         if not count:
             return False
 
-        # Blind count masking: if is_blind_count is True and status is IN_PROGRESS, or user lacks CanViewSystemQuantity
+        # Blind count masking: if is_blind_count is True and status is IN_PROGRESS or draft
         if count.is_blind_count and count.count_status in ["in_progress", "draft"]:
             return True
 
@@ -94,6 +91,11 @@ class StockCountLineSerializer(serializers.ModelSerializer):
 
 
 class StockCountLineRecordSerializer(serializers.Serializer):
-    line_id = serializers.UUIDField()
-    counted_quantity = serializers.DecimalField(max_digits=14, decimal_places=2)
-    notes = serializers.CharField(max_length=255, required=False, default="")
+    """Serializer for recording physical count quantities against a stock count line."""
+
+    medicine_id = serializers.UUIDField()
+    batch_id = serializers.UUIDField(required=False, allow_null=True)
+    storage_location_id = serializers.UUIDField()
+    counted_quantity = serializers.DecimalField(max_digits=14, decimal_places=4)
+    unit_cost = serializers.DecimalField(max_digits=14, decimal_places=4, required=False, default="0.0000")
+    notes = serializers.CharField(max_length=500, required=False, default="")

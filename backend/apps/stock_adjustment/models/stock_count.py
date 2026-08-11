@@ -4,15 +4,12 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from apps.branches.models import Branch
 from apps.common.models import FullAuditModel, TenantAwareModel
-from apps.companies.models import Company
 from apps.stock_adjustment.models.enums import CountScopeType, CountStatus, CountType
-from apps.users.models import User
-from apps.warehouses.models import StorageLocation, Warehouse
 
 
 class StockCount(TenantAwareModel, FullAuditModel):
@@ -24,14 +21,14 @@ class StockCount(TenantAwareModel, FullAuditModel):
         verbose_name=_("Count Number"),
     )
     company = models.ForeignKey(
-        Company,
+        "companies.Company",
         on_delete=models.CASCADE,
         related_name="stock_counts",
         verbose_name=_("Company"),
         db_index=True,
     )
     branch = models.ForeignKey(
-        Branch,
+        "branches.Branch",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -40,14 +37,14 @@ class StockCount(TenantAwareModel, FullAuditModel):
         db_index=True,
     )
     warehouse = models.ForeignKey(
-        Warehouse,
+        "warehouses.Warehouse",
         on_delete=models.CASCADE,
         related_name="stock_counts",
         verbose_name=_("Warehouse"),
         db_index=True,
     )
     storage_location = models.ForeignKey(
-        StorageLocation,
+        "warehouses.StorageLocation",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -104,7 +101,7 @@ class StockCount(TenantAwareModel, FullAuditModel):
 
     # User Accountability
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -112,7 +109,7 @@ class StockCount(TenantAwareModel, FullAuditModel):
         verbose_name=_("Created By"),
     )
     started_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -120,7 +117,7 @@ class StockCount(TenantAwareModel, FullAuditModel):
         verbose_name=_("Started By"),
     )
     completed_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -128,7 +125,7 @@ class StockCount(TenantAwareModel, FullAuditModel):
         verbose_name=_("Completed By"),
     )
     reviewed_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -136,7 +133,7 @@ class StockCount(TenantAwareModel, FullAuditModel):
         verbose_name=_("Reviewed By"),
     )
     approved_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -144,7 +141,7 @@ class StockCount(TenantAwareModel, FullAuditModel):
         verbose_name=_("Approved By"),
     )
     reconciled_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

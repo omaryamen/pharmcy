@@ -1,8 +1,8 @@
 # PharmaCloud ERP — Project Status & Roadmap
 
-**Last Updated:** 2026-08-09  
+**Last Updated:** 2026-08-11  
 **System Status:** Operational / Healthy  
-**Automated Test Pass Rate:** 100% (368 / 368 passed)  
+**Automated Test Pass Rate:** 100% (450 / 450 passed)  
 **Backend Framework:** Django 5.2 (Python 3.10+)  
 **Frontend Framework:** Next.js (Pending Phase)  
 
@@ -17,9 +17,13 @@
 | **P002 / REF** | Enterprise Pharmaceutical Reference Data Engine | **Completed** | 100% | 100% | 100% |
 | **P003 / INV** | Enterprise Inventory & Batch Management | **Completed** | 100% | 100% | 100% |
 | **P003 / STK** | Enterprise Stock Movement Engine | **Completed** | 100% | 100% | 100% |
+| **P003 / ADJ** | Enterprise Stock Adjustment & Stock Count | **Completed** | 100% | 100% | 100% |
+| **P003 / TRF** | Enterprise Inter-Branch & Warehouse Stock Transfer | **Completed** | 100% | 100% | 100% |
+| **P003 / ALT** | Enterprise Expiry, Recall & Inventory Alert Management | **Completed** | 100% | 100% | 100% |
 | **P004 / POS** | Point of Sale (POS) | Unstarted | 0% | 0% | - |
 | **P005 / SAL** | Sales Management | Unstarted | 0% | 0% | - |
-| **P006 / PUR** | Purchasing & Procurement | Unstarted | 0% | 0% | - |
+| **P006 / PUR** | Enterprise Purchasing & Purchase Order Management | **Completed** | 100% | 100% | 100% |
+| **P006 / REC** | Enterprise Goods Receipt & Receiving Management | **Completed** | 100% | 100% | 100% |
 | **P007 / SUP** | Enterprise Supplier Management | **Completed** | 100% | 100% | 100% |
 | **P008 / CUS** | Enterprise Customer Management | **Completed** | 100% | 100% | 100% |
 | **P009 / RX** | Prescriptions | Unstarted | 0% | 0% | - |
@@ -96,16 +100,55 @@
 - **Sequence Generator**: Collision-safe document sequence code generator (`STK-2026-XXXXXX`, `TRF-2026-XXXXXX`, `REC-2026-XXXXXX`, `ISS-2026-XXXXXX`).
 - **REST APIs**: Published endpoints under `/api/v1/stock-movements/` for CRUD, status processing (`/process/`, `/cancel/`, `/reverse/`), operational shortcuts (`/receive/`, `/issue/`, `/transfer/`), traceability reporting (`/traceability/`), and movement stats (`/stats/`).
 
+### Enterprise Stock Adjustment & Stock Count (`apps.stock_adjustment` / `IMP-018`)
+- **Stock Count Lifecycle Engine**: `StockCountService` managing the complete physical audit lifecycle: `DRAFT` → `IN_PROGRESS` → `SUBMITTED` → `APPROVED` → `RECONCILED` (or `RECOUNT_REQUIRED` / `CANCELLED` / `REJECTED`).
+- **Blind Count Security & Masking**: Physical counters are prohibited from seeing system snapshot quantities or calculated variances during count entry when `is_blind_count=True`. Masked dynamically at the serializer layer.
+- **Atomic Stock Movement Reconciliation**: Reconciliation triggers `StockMovementEngine` to generate authoritative double-entry inventory movements (`ADJUSTMENT_IN` for overages, `ADJUSTMENT_OUT` for shortages) with row locking and idempotency protection.
+- **Multi-Counter Counting Sessions & Line Recounts**: `StockCountSession` and `StockCountRecount` models to track sub-team count assignments and line-level recount workflows.
+- **REST APIs & Document Numbering**: Full REST endpoints under `/api/v1/stock-counts/` with sequential document number generation (`CNT-YYYY-XXXXXX`, `SES-YYYY-XXXXXX`, `REC-YYYY-XXXXXX`).
+
+### Enterprise Inter-Branch & Warehouse Stock Transfer (`apps.stock_transfer` / `IMP-019`)
+- **Stock Transfer Workflow Engine**: `StockTransferService` managing the complete transfer lifecycle: `DRAFT` → `REQUESTED` → `APPROVED` → `PICKING` → `READY_FOR_DISPATCH` → `DISPATCHED` / `IN_TRANSIT` → `RECEIVED` / `PARTIALLY_RECEIVED` / `DISCREPANCY` → `CLOSED`.
+- **FEFO-Aware Picking**: Automatic FEFO batch selection for outgoing lines without specified batches, enforcing valid non-expired, non-recalled, non-quarantined stock selection.
+- **Atomic Double-Entry Dispatch & Receiving**: Stock movement orchestration via `StockMovementEngine` using `TRANSFER_OUT` and `TRANSFER_IN` with zero direct inventory balance mutations.
+- **Discrepancies & Damage Tracking**: Automatic `StockTransferDiscrepancy` generation for quantity shortages, overages, damaged goods during transport (`DAMAGE` movements), wrong batch, and wrong medicine delivery.
+- **Compensating Reversals & Separation of Duties**: Reversal workflow creating compensating double-entry movements, preventing double reversal. Approval checks enforce separation of duties between requesters and approvers.
+- **REST APIs & Sequential Numbering**: REST endpoints under `/api/v1/stock-transfers/` with sequential document code generation (`TRF-YYYY-XXXXXX`, `DISC-YYYY-XXXXXX`).
+
+### Enterprise Expiry, Recall & Inventory Alert Management (`apps.alerts` / `IMP-020`)
+- **Alert Scanner Engine**: `AlertScannerService` scanning active inventory balances and pharmaceutical batch expiry dates, generating/updating real-time `InventoryAlert` records for low stock, out of stock, near expiry (30/60/90 days), and expired stock.
+- **Batch Recall & Auto-Quarantine Engine**: `BatchRecallService` managing formal pharmaceutical recall orders (`RCL-YYYY-XXXXXX`), setting batch status to `RECALLED`, and executing automated stock quarantining across all warehouses via `StockMovementEngine` (`QUARANTINE` movement type).
+- **Acknowledgment & Resolution Lifecycle**: Full lifecycle tracking (`ACTIVE` → `ACKNOWLEDGED` → `RESOLVED` / `DISMISSED`) with user accountability and resolution notes.
+- **REST APIs & Sequential Numbering**: Published endpoints under `/api/v1/alerts/` and `/api/v1/recalls/` with sequential document code generation (`ALT-YYYY-XXXXXX`, `RCL-YYYY-XXXXXX`).
+
+### Enterprise Purchasing & Purchase Order Management (`apps.procurement` / `IMP-021`)
+- **Purchase Requisition Engine**: `PurchaseRequisition` header & lines (`PR-YYYY-XXXXXX`) managing internal purchase requests (`DRAFT` → `SUBMITTED` → `APPROVED` / `REJECTED`).
+- **Purchase Order Engine**: `PurchaseOrder` header & lines (`PO-YYYY-XXXXXX`) for supplier commitments (`DRAFT` → `PENDING_APPROVAL` → `APPROVED` → `SENT_TO_SUPPLIER` → `ACKNOWLEDGED` → `PARTIALLY_RECEIVED` → `FULLY_RECEIVED` → `CLOSED`). Zero direct inventory mutation.
+- **Requisition to PO Conversion**: Service converting approved requisitions into POs grouped by preferred supplier with row locking idempotency.
+- **Controlled Amendments & Separation of Duties**: `PurchaseOrderAmendment` audit trail for approved order modifications. Enforces creator != approver separation of duties.
+- **REST APIs & Sequential Numbering**: Published endpoints under `/api/v1/purchase-requisitions/`, `/api/v1/purchase-orders/`, `/api/v1/supplier-prices/`.
+
+### Enterprise Goods Receipt & Receiving Management (`apps.goods_receipt` / `IMP-022`)
+- **Physical Goods Receiving Engine**: `GoodsReceipt` header & lines (`GRN-YYYY-XXXXXX`) receiving stock against Purchase Orders or standalone supplier deliveries (`DRAFT` → `RECEIVING` → `PENDING_VERIFICATION` → `COMPLETED`).
+- **Batch Management & Expiry Validation**: Automatic `Batch` creation/reuse with expiry date validation, recall status checks, and cold chain temperature excursion tracking.
+- **Authoritative Stock Movement Posting Engine**: `post_goods_receipt` executing physical inventory balance additions strictly via `StockMovementEngine` (`RECEIPT` / `QUARANTINE` / `DAMAGE`) with zero direct quantity mutations.
+- **PO Quantity Reconciliation & Reversals**: Updates PO lines (`received_quantity`, `free_quantity_received`) and PO status (`PARTIALLY_RECEIVED`, `FULLY_RECEIVED`). `reverse_goods_receipt` executing compensating stock movements and restoring PO quantities.
+- **REST APIs & Sequential Numbering**: Published endpoints under `/api/v1/goods-receipts/` (`/post/`, `/reverse/`, `/statistics/`).
+
 ---
 
 ## 3. Next Recommended Module
 
-**Module Code:** `IMP-018` — **Enterprise Purchasing & Procurement Module** (`apps.procurement`)
+**Module Code:** `IMP-023` — **Enterprise Purchase Returns & Supplier Returns Management** (`apps.purchase_returns`)
 
 ---
 
 ## 4. Test Verification Log
 
 ```bash
-============================ 368 passed in 55.23s =============================
+============================ 450 passed in 82.18s =============================
 ```
+
+
+
+
