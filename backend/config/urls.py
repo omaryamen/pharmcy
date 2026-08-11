@@ -38,6 +38,10 @@ urlpatterns = [
     path("api/v1/", include("apps.alerts.api.urls")),
     path("api/v1/", include("apps.procurement.api.urls")),
     path("api/v1/", include("apps.goods_receipt.api.urls")),
+    path("api/v1/", include("apps.purchase_returns.api.urls")),
+    path("api/v1/", include("apps.accounts_payable.api.urls")),
+    path("api/v1/", include("apps.sales.api.urls")),
+    path("api/v1/", include("apps.sales_returns.api.urls")),
     # OpenAPI schema & documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),

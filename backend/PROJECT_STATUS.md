@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-08-11  
 **System Status:** Operational / Healthy  
-**Automated Test Pass Rate:** 100% (450 / 450 passed)  
+**Automated Test Pass Rate:** 100% (491 / 491 passed)  
 **Backend Framework:** Django 5.2 (Python 3.10+)  
 **Frontend Framework:** Next.js (Pending Phase)  
 
@@ -20,14 +20,16 @@
 | **P003 / ADJ** | Enterprise Stock Adjustment & Stock Count | **Completed** | 100% | 100% | 100% |
 | **P003 / TRF** | Enterprise Inter-Branch & Warehouse Stock Transfer | **Completed** | 100% | 100% | 100% |
 | **P003 / ALT** | Enterprise Expiry, Recall & Inventory Alert Management | **Completed** | 100% | 100% | 100% |
-| **P004 / POS** | Point of Sale (POS) | Unstarted | 0% | 0% | - |
-| **P005 / SAL** | Sales Management | Unstarted | 0% | 0% | - |
+| **P004 / POS** | Enterprise POS & Sales Management | **Completed** | 100% | 100% | 100% |
+| **P005 / SAL** | Sales Management | **Completed** | 100% | 100% | 100% |
+| **P005 / RET** | Enterprise Customer Sales Returns & Refund Management | **Completed** | 100% | 100% | 100% |
 | **P006 / PUR** | Enterprise Purchasing & Purchase Order Management | **Completed** | 100% | 100% | 100% |
 | **P006 / REC** | Enterprise Goods Receipt & Receiving Management | **Completed** | 100% | 100% | 100% |
+| **P006 / RET** | Enterprise Purchase Returns & Supplier Returns | **Completed** | 100% | 100% | 100% |
 | **P007 / SUP** | Enterprise Supplier Management | **Completed** | 100% | 100% | 100% |
 | **P008 / CUS** | Enterprise Customer Management | **Completed** | 100% | 100% | 100% |
 | **P009 / RX** | Prescriptions | Unstarted | 0% | 0% | - |
-| **P010 / ACC** | Accounting | Unstarted | 0% | 0% | - |
+| **P010 / ACC** | Enterprise Supplier Invoices & Accounts Payable Foundation | **Completed** | 100% | 100% | 100% |
 | **P011 / RPT** | Reports | Unstarted | 0% | 0% | - |
 | **P012 / BR** | Branch Management | **Completed** | 100% | 100% | 100% |
 | **P012 / COM** | Company Management | **Completed** | 100% | 100% | 100% |
@@ -135,20 +137,48 @@
 - **PO Quantity Reconciliation & Reversals**: Updates PO lines (`received_quantity`, `free_quantity_received`) and PO status (`PARTIALLY_RECEIVED`, `FULLY_RECEIVED`). `reverse_goods_receipt` executing compensating stock movements and restoring PO quantities.
 - **REST APIs & Sequential Numbering**: Published endpoints under `/api/v1/goods-receipts/` (`/post/`, `/reverse/`, `/statistics/`).
 
+### Enterprise Purchase Returns & Supplier Returns (`apps.purchase_returns` / `IMP-023`)
+- **Supplier Returns Engine**: `PurchaseReturn` header & lines (`PRT-YYYY-XXXXXX`) returning stock against Goods Receipts and Purchase Orders (`DRAFT` → `REQUESTED` → `APPROVED` → `DISPATCHED` → `ACCEPTED` / `DISCREPANCY`).
+- **Stock Movement Integration**: `dispatch_purchase_return` executing physical stock removals strictly through `StockMovementEngine` (`PURCHASE_RETURN`) with zero direct quantity mutations and stock level checks.
+- **Supplier Acceptance & Discrepancies**: `record_supplier_acceptance` logging supplier accepted/rejected quantities, automatically creating `ReturnDiscrepancy` (`DISC-YYYY-XXXXXX`) for shortages and `SupplierCreditNote` (`CRN-YYYY-XXXXXX`) for accepted value.
+- **Reversal Engine & Separation of Duties**: Reversal workflow executing compensating receipt movements. Approval checks enforce separation of duties.
+- **REST APIs & Sequential Numbering**: Published endpoints under `/api/v1/purchase-returns/` (`/dispatch/`, `/supplier-acceptance/`, `/reverse/`, `/statistics/`).
+
+### Enterprise Supplier Invoices & Accounts Payable Foundation (`apps.accounts_payable` / `IMP-024`)
+- **Vendor Bill & Invoice Engine**: `SupplierInvoice` header & lines (`INV-YYYY-XXXXXX`) for vendor bills (`DRAFT` → `VERIFIED` → `APPROVED` → `POSTED` → `PARTIALLY_PAID` → `PAID`).
+- **Three-Way Matching Engine**: Line-by-line verification across PO, Goods Receipt, and Invoice detecting `MATCHED`, `QUANTITY_VARIANCE`, `PRICE_VARIANCE`, `RECEIPT_MISSING`, `SUPPLIER_MISMATCH`.
+- **AP Subledger & Duplicate Detection**: `AccountsPayableEntry` (`AP-YYYY-XXXXXX`) tracking outstanding vendor liabilities. Duplicate bill detection by `(tenant, supplier, supplier_invoice_number)`.
+- **Supplier Payments & Credit Notes Integration**: `SupplierPayment` (`PAY-YYYY-XXXXXX`) and `CreditApplication` applying `SupplierCreditNote` (from IMP-023) against open payables. Supports partial payments, full payments, overpayment prevention, and payment reversals.
+- **AP Aging & Supplier Balance Analytics**: Calculates AP aging buckets (Current, 1-30, 31-60, 61-90, 90+ days) and net supplier balance summary.
+- **REST APIs & Sequential Numbering**: Published endpoints under `/api/v1/supplier-invoices/`, `/api/v1/supplier-payments/`, `/api/v1/accounts-payable/` (`/verify/`, `/post/`, `/apply-credit/`, `/aging/`, `/statistics/`).
+
+### Enterprise POS & Sales Management (`apps.sales` / `IMP-025`)
+- **POS Retail Counter & Cart Engine**: `SalesInvoice` and `SalesInvoiceLine` (`INV-YYYY-XXXXXX`) for retail sales (`DRAFT` -> `HELD` -> `COMPLETED` -> `VOIDED`).
+- **FEFO Batch Allocation**: `FEFOBatchSelector` automatically selects earliest expiring non-expired, non-recalled, non-quarantined medicine batch.
+- **Authoritative Stock Reduction**: Completing a sale reduces inventory strictly through `StockMovementEngine` (`SALE` movement type) with zero direct quantity mutations and row locking.
+- **Payments, Change & Customer Credit**: `SalesPayment` (`PAY-YYYY-XXXXXX`) supporting cash, card, mobile wallet, split payments, cash change calculation, and customer credit sales with credit limit enforcement.
+- **Void Workflow & Stock Restoration**: `void_completed_sale` creates compensating `SALE_RETURN` movements via `StockMovementEngine` and restores customer credit balance.
+- **Cash Registers & Shift Sessions**: `CashRegister` (`REG-YYYY-XXXXXX`) and `RegisterSession` (`SES-YYYY-XXXXXX`) for managing cashier shift sessions and till cash reconciliation (expected cash vs actual count variance).
+- **REST APIs & Barcode Search**: Endpoints under `/api/v1/sales/`, `/api/v1/pos/`, `/api/v1/cash-registers/`, `/api/v1/register-sessions/` (`/complete/`, `/void/`, `/lookup/barcode/`, `/analytics/`).
+
+### Enterprise Customer Sales Returns & Refund Management (`apps.sales_returns` / `IMP-026`)
+- **Customer Returns Engine**: `CustomerReturn` header & lines (`CRT-YYYY-XXXXXX`) managing customer sales returns against `SalesInvoice` (`DRAFT` → `REQUESTED` → `APPROVED` → `INSPECTION` → `ACCEPTED` / `PARTIALLY_ACCEPTED` / `REJECTED`).
+- **Return Eligibility & Quantity Validation**: Line-by-line validation enforcing `requested_quantity <= original_sold - previously_returned`.
+- **Quality Inspection & Stock Restoration**: Quality inspection logging accepted vs rejected quantities per line. Stock restoration executed strictly via `StockMovementEngine` (`SALE_RETURN` for sealed stock, `QUARANTINE` for damaged/opened stock) with zero direct quantity mutations.
+- **Refund Disbursements & Store Credit**: `CustomerRefund` (`REF-YYYY-XXXXXX`) supporting cash, card, bank transfer, and store credit refunds (reducing customer balance liability).
+- **Return Reversals & Separation of Duties**: Reversal workflow executing compensating `SALE` movements via `StockMovementEngine` and reversing customer store credit. Approval enforces creator != approver separation of duties.
+- **REST APIs & Return Analytics**: Endpoints published under `/api/v1/customer-returns/` and `/api/v1/customer-refunds/` (`/approve/`, `/inspect/`, `/process-refund/`, `/reverse/`, `/statistics/`).
+
 ---
 
 ## 3. Next Recommended Module
 
-**Module Code:** `IMP-023` — **Enterprise Purchase Returns & Supplier Returns Management** (`apps.purchase_returns`)
+**Module Code:** `IMP-027` — **Enterprise Prescription Management & Pharmacy Dispensing** (`apps.prescriptions`)
 
 ---
 
 ## 4. Test Verification Log
 
 ```bash
-============================ 450 passed in 82.18s =============================
-```
-
-
 
 

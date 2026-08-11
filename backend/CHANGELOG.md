@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.21.0] - 2026-08-11
+
+### Added - Enterprise Customer Sales Returns & Refund Management (`apps.sales_returns` / `IMP-026`)
+- **Customer Returns Engine**: Implemented `CustomerReturn` and `CustomerReturnLine` models (`CRT-YYYY-XXXXXX`) managing customer sales returns against `SalesInvoice` (`DRAFT` → `REQUESTED` → `APPROVED` → `INSPECTION` → `ACCEPTED` / `PARTIALLY_ACCEPTED` / `REJECTED`).
+- **Return Eligibility & Quantity Validation**: Created `validate_returnable_quantity` enforcing line-by-line returnable limits (`requested_quantity <= original_sold - previously_returned`).
+- **Quality Inspection & Stock Restoration**: Implemented `inspect_and_accept_return` logging accepted/rejected quantities and restoring stock strictly via `StockMovementEngine` (`SALE_RETURN` for sealed stock, `QUARANTINE` for damaged stock) with zero direct quantity mutations.
+- **Refund Disbursements & Store Credit**: Created `CustomerRefund` (`REF-YYYY-XXXXXX`) supporting cash, card, bank transfer, and store credit refunds (adjusting customer account balance).
+- **Return Reversals & Separation of Duties**: Implemented `reverse_customer_return` creating compensating `SALE` movements via `StockMovementEngine` and reversing customer store credit. Enforced creator != approver separation of duties.
+- **REST APIs & Return Analytics**: Published endpoints under `/api/v1/customer-returns/` and `/api/v1/customer-refunds/` (`/approve/`, `/inspect/`, `/process-refund/`, `/reverse/`, `/statistics/`).
+- **Test Suite**: Created `tests/test_sales_returns.py` (491 total tests passing, 100% pass rate).
+
+---
+
+## [1.20.0] - 2026-08-11
+
+### Added - Enterprise POS & Sales Management (`apps.sales` / `IMP-025`)
+- **POS Retail Counter & Cart Engine**: Implemented `SalesInvoice` and `SalesInvoiceLine` models (`INV-YYYY-XXXXXX`) supporting retail checkout and cart management (`DRAFT` -> `HELD` -> `COMPLETED` -> `VOIDED`).
+- **FEFO Batch Allocation**: Created `FEFOBatchSelector` automatically allocating the earliest expiring valid medicine batch while filtering out expired, recalled, or quarantined batches.
+- **Authoritative Stock Reduction**: Completing a sale reduces physical inventory strictly through `StockMovementEngine` (`SALE` movement type) with zero direct quantity mutations and pessimistic DB row locking.
+- **Payments, Change & Customer Credit**: Created `SalesPayment` (`PAY-YYYY-XXXXXX`) supporting cash, card, mobile wallet, split payments, cash change calculation, and customer credit sales with credit limit validation.
+- **Void Workflow & Stock Restoration**: Implemented `void_completed_sale` creating compensating `SALE_RETURN` movements via `StockMovementEngine` and restoring customer credit balance.
+- **Cash Registers & Shift Sessions**: Created `CashRegister` (`REG-YYYY-XXXXXX`) and `RegisterSession` (`SES-YYYY-XXXXXX`) for managing cashier shift sessions and till cash reconciliation (calculating expected cash vs actual count variance).
+- **REST APIs & Barcode Search**: Endpoints published under `/api/v1/sales/`, `/api/v1/pos/`, `/api/v1/cash-registers/`, `/api/v1/register-sessions/` (`/complete/`, `/void/`, `/lookup/barcode/`, `/analytics/`).
+- **Test Suite**: Created `tests/test_sales.py` (480 total tests passing, 100% pass rate).
+
+---
+
+## [1.19.0] - 2026-08-11
+
+### Added - Enterprise Supplier Invoices & Accounts Payable Foundation (`apps.accounts_payable` / `IMP-024`)
+- **Vendor Bill & Invoice Engine**: Created `SupplierInvoice` and `SupplierInvoiceLine` models (`INV-YYYY-XXXXXX`) for managing vendor bills (`DRAFT` -> `VERIFIED` -> `APPROVED` -> `POSTED` -> `PARTIALLY_PAID` -> `PAID`).
+- **Three-Way Matching Engine**: Implemented `ThreeWayMatchService` comparing PO, Goods Receipt, and Invoice lines to detect `MATCHED`, `QUANTITY_VARIANCE`, `PRICE_VARIANCE`, `RECEIPT_MISSING`, and `SUPPLIER_MISMATCH`.
+- **AP Subledger & Duplicate Detection**: Created `AccountsPayableEntry` (`AP-YYYY-XXXXXX`) for tracking outstanding vendor balances. Enforces duplicate bill detection by `(tenant, supplier, supplier_invoice_number)`.
+- **Supplier Payments & Credit Note Integration**: Created `SupplierPayment` (`PAY-YYYY-XXXXXX`) and `CreditApplication` applying `SupplierCreditNote` (from IMP-023) against open payables. Supports partial payments, full payments, overpayment prevention, and payment reversals.
+- **AP Aging & Supplier Balance Analytics**: Provided `calculate_ap_aging` breakdown (Current, 1-30, 31-60, 61-90, 90+ days) and net supplier balance summary.
+- **REST APIs & Test Suite**: Published endpoints under `/api/v1/supplier-invoices/`, `/api/v1/supplier-payments/`, `/api/v1/accounts-payable/` and created `tests/test_accounts_payable.py` (469 total tests passing, 100% pass rate).
+
+---
+
+## [1.18.0] - 2026-08-11
+
+### Added - Enterprise Purchase Returns & Supplier Returns (`apps.purchase_returns` / `IMP-023`)
+- **Supplier Returns Engine**: Created `PurchaseReturn` and `PurchaseReturnLine` models (`PRT-YYYY-XXXXXX`) returning stock against Goods Receipts and Purchase Orders (`DRAFT` -> `REQUESTED` -> `APPROVED` -> `DISPATCHED` -> `ACCEPTED` / `DISCREPANCY`).
+- **Stock Movement Integration**: Implemented `dispatch_purchase_return` executing physical stock removals strictly through `StockMovementEngine` (`PURCHASE_RETURN`) with zero direct quantity mutations and stock balance validations.
+- **Supplier Acceptance & Discrepancy Tracking**: Created `ReturnDiscrepancy` (`DISC-YYYY-XXXXXX`) for quantity shortages/rejections and `SupplierCreditNote` (`CRN-YYYY-XXXXXX`) foundation for accepted values.
+- **Reversal Engine & Separation of Duties**: Supports compensating return reversal movements restoring inventory balance. Enforces creator != approver separation of duties.
+- **REST APIs & Test Suite**: Published endpoints under `/api/v1/purchase-returns/` and created `tests/test_purchase_returns.py` (457 total tests passing, 100% pass rate).
+
+---
+
 ## [1.17.0] - 2026-08-11
 
 ### Added - Enterprise Goods Receipt & Receiving Management (`apps.goods_receipt` / `IMP-022`)
