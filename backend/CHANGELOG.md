@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.25.0] - 2026-08-12
+
+### Added - Enterprise Cash, Bank & Financial Reconciliation (`apps.cash_and_bank` / `IMP-030`)
+- **Treasury Accounts & Cash Management**: Implemented `CashAccount` and `BankAccount` models supporting GL chart of account linkage and ledger balance tracking.
+- **Cashier Session Closing & Variance Engine**: Created `CashSessionReconciliationService` managing POS shift session closing, actual vs expected cash count reconciliation, and automated `CashVariance` (`CVR-YYYY-XXXXXX`) logging for shortages (-100) or overages (+100).
+- **Treasury Operations Engine**: Created `TreasuryOperationsService` executing Cash Deposits (`DEP-YYYY-XXXXXX`, Cash -> Bank) and Cash Withdrawals (`WTH-YYYY-XXXXXX`, Bank -> Cash) with double-entry GL journal posting via `JournalPostingService` (`Debit Bank 1200, Credit Cash 1100` / `Debit Cash 1100, Credit Bank 1200`).
+- **Bank Statement Import & Duplicate Protection**: Created `BankStatementImportService` importing statement lines with sha256 `import_hash` fingerprinting to prevent duplicate statement transaction imports.
+- **Financial Reconciliation & Exception Matching**: Created `FinancialReconciliationService` managing `BankReconciliation` (`REC-YYYY-XXXXXX`) sessions, linking statement transactions to book entries (`ReconciliationMatch`), and logging unreconciled items (`ReconciliationException`).
+- **REST APIs & Treasury Summary**: Published endpoints under `/api/v1/cash/accounts/`, `/api/v1/cash/deposits/`, `/api/v1/cash/withdrawals/`, `/api/v1/cash/transfers/`, `/api/v1/banks/accounts/`, `/api/v1/banks/transactions/`, `/api/v1/banks/reconciliations/`, and `/api/v1/financial-reconciliation/`.
+- **Test Suite**: Created `tests/test_cash_and_bank.py` (524 total platform tests passing, 100% pass rate).
+
+---
+
+## [1.24.0] - 2026-08-11
+
+### Added - Enterprise General Ledger & Double-Entry Accounting (`apps.general_ledger` / `IMP-029`)
+- **Chart of Accounts Engine**: Created `ChartOfAccount` model supporting 6 account types (`ASSET`, `LIABILITY`, `EQUITY`, `REVENUE`, `EXPENSE`, `COST_OF_GOODS_SOLD`), control account protection, and automated default system account seeding.
+- **Double-Entry Journal Posting Engine**: Created `JournalPostingService` enforcing strict `Total Debits == Total Credits` double-entry rules and `AccountingPeriod` lock verification.
+- **Immutable Journal Reversal Engine**: Created `JournalReversalService` executing compensating reversal journals (`Original Debit -> Reversal Credit`).
+- **Operational GL Integrations**: Created `GLIntegrationPostingService` posting balanced double-entry journals for POS sales, customer payments, supplier bills, supplier payments, and COGS inventory movements.
+- **Financial Statements & Reconciliation**: Created `GLSelector` and `GLReconciliationService` computing Trial Balance, Profit & Loss, Balance Sheet, and subledger audit reconciliation.
+- **REST APIs**: Published endpoints under `/api/v1/accounting/accounts/`, `/api/v1/accounting/journals/`, `/api/v1/accounting/periods/`, and `/api/v1/accounting/reports/`.
+- **Test Suite**: Created `tests/test_general_ledger.py` (515 total platform tests passing, 100% pass rate).
+
+---
+
+## [1.23.0] - 2026-08-11
+
+### Added - Enterprise Customer Accounts Receivable (AR) (`apps.accounts_receivable` / `IMP-028`)
+- **AR Subledger Engine**: Implemented `CustomerReceivable` model (`AR-YYYY-XXXXXX`) tracking customer financial obligations created by credit sales, POS invoices, or manual entries.
+- **Credit Sales & Credit Limit Checks**: Created `CustomerReceivableService` integrating POS credit sales without duplicating sales invoices, enforcing credit limits and updating customer debt balances (`customer.current_balance`).
+- **Customer Payments & Allocations**: Implemented `CustomerPayment` (`CPY-YYYY-XXXXXX`) and `CustomerPaymentAllocation` supporting multi-receivable payment allocation, partial payments, full payments, and overpayment policy enforcement.
+- **Adjustments & Bad Debt Write-Offs**: Created `ReceivableAdjustment` (`ADJ-YYYY-XXXXXX`) and `ReceivableWriteOff` (`WOF-YYYY-XXXXXX`) for debit/credit adjustments and bad debt write-offs with separation of duties enforcement.
+- **Disputes & Payment Reversals**: Created `ReceivableDispute` (`DSP-YYYY-XXXXXX`) for invoice disputes and payment reversals restoring receivable balances and customer debt.
+- **AR Aging & Statements**: Created `ReceivableSelector` calculating AR aging buckets (Current, 1-30, 31-60, 61-90, 90+ days) and generating customer ledger statements with running balances.
+- **AR Reconciliation Service**: Created `ARReconciliationService` auditing subledger integrity.
+- **REST APIs**: Published endpoints under `/api/v1/accounts-receivable/`, `/api/v1/customer-payments/`, `/api/v1/customer-statements/`, and `/api/v1/ar-analytics/`.
+- **Test Suite**: Created `tests/test_accounts_receivable.py` (507 total tests passing, 100% pass rate).
+
+---
+
+## [1.22.0] - 2026-08-11
+
+### Added - Enterprise Prescription Management & Pharmacy Dispensing (`apps.prescriptions` / `IMP-027`)
+- **Prescription Document Engine**: Implemented `Prescription` and `PrescriptionLine` models (`RX-YYYY-XXXXXX`) managing clinical prescription lifecycle (`DRAFT` → `PENDING_VERIFICATION` → `VERIFIED` → `PARTIALLY_DISPENSED` → `FULLY_DISPENSED`).
+- **Clinical Verification & Controlled Substances**: Implemented `verify_prescription` enforcing doctor license checks for Narcotics and Class A/B Controlled drugs.
+- **Pharmacy Dispensing & FEFO Batch Allocation**: Created `PharmacyDispensingService.dispense_prescription` generating `PrescriptionDispense` (`DISP-YYYY-XXXXXX`) with FEFO batch selection.
+- **Authoritative Stock Deduction**: Stock reduction during dispensing is executed strictly via `StockMovementEngine` (`SALE` movement type) inside `@transaction.atomic` blocks with `select_for_update()` row locking. Zero direct inventory mutations.
+- **Dispensing Reversals & Refills**: Implemented `reverse_dispensation` restoring stock strictly via compensating `SALE_RETURN` stock movements and updating line refill balances.
+- **REST APIs & Clinical Statistics**: Published endpoints under `/api/v1/prescriptions/` and `/api/v1/dispensations/` (`/verify/`, `/dispense/`, `/reverse/`, `/statistics/`).
+- **Test Suite**: Created `tests/test_prescriptions.py` (498 total tests passing, 100% pass rate).
+
+---
+
 ## [1.21.0] - 2026-08-11
 
 ### Added - Enterprise Customer Sales Returns & Refund Management (`apps.sales_returns` / `IMP-026`)

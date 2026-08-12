@@ -95,6 +95,11 @@ LOCAL_APPS = [
     "apps.accounts_payable.apps.AccountsPayableConfig",
     "apps.sales.apps.SalesConfig",
     "apps.sales_returns.apps.SalesReturnsConfig",
+    "apps.prescriptions.apps.PrescriptionsConfig",
+    "apps.accounts_receivable.apps.AccountsReceivableConfig",
+    "apps.general_ledger.apps.GeneralLedgerConfig",
+    "apps.cash_and_bank.apps.CashAndBankConfig",
+    "apps.expenses.apps.ExpensesConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

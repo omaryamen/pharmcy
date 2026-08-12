@@ -1,8 +1,8 @@
 # PharmaCloud ERP — Project Status & Roadmap
 
-**Last Updated:** 2026-08-11  
+**Last Updated:** 2026-08-12  
 **System Status:** Operational / Healthy  
-**Automated Test Pass Rate:** 100% (491 / 491 passed)  
+**Automated Test Pass Rate:** 100% (524 / 524 passed)  
 **Backend Framework:** Django 5.2 (Python 3.10+)  
 **Frontend Framework:** Next.js (Pending Phase)  
 
@@ -28,8 +28,11 @@
 | **P006 / RET** | Enterprise Purchase Returns & Supplier Returns | **Completed** | 100% | 100% | 100% |
 | **P007 / SUP** | Enterprise Supplier Management | **Completed** | 100% | 100% | 100% |
 | **P008 / CUS** | Enterprise Customer Management | **Completed** | 100% | 100% | 100% |
-| **P009 / RX** | Prescriptions | Unstarted | 0% | 0% | - |
+| **P009 / RX** | Enterprise Prescription Management & Pharmacy Dispensing | **Completed** | 100% | 100% | 100% |
 | **P010 / ACC** | Enterprise Supplier Invoices & Accounts Payable Foundation | **Completed** | 100% | 100% | 100% |
+| **P010 / AR** | Enterprise Customer Accounts Receivable (AR) | **Completed** | 100% | 100% | 100% |
+| **P010 / GL** | Enterprise General Ledger & Double-Entry Accounting | **Completed** | 100% | 100% | 100% |
+| **P010 / CSH** | Enterprise Cash, Bank & Financial Reconciliation | **Completed** | 100% | 100% | 100% |
 | **P011 / RPT** | Reports | Unstarted | 0% | 0% | - |
 | **P012 / BR** | Branch Management | **Completed** | 100% | 100% | 100% |
 | **P012 / COM** | Company Management | **Completed** | 100% | 100% | 100% |
@@ -169,11 +172,44 @@
 - **Return Reversals & Separation of Duties**: Reversal workflow executing compensating `SALE` movements via `StockMovementEngine` and reversing customer store credit. Approval enforces creator != approver separation of duties.
 - **REST APIs & Return Analytics**: Endpoints published under `/api/v1/customer-returns/` and `/api/v1/customer-refunds/` (`/approve/`, `/inspect/`, `/process-refund/`, `/reverse/`, `/statistics/`).
 
+### Enterprise Prescription Management & Pharmacy Dispensing (`apps.prescriptions` / `IMP-027`)
+- **Prescription Document Engine**: `Prescription` header & lines (`RX-YYYY-XXXXXX`) managing clinical prescriptions (`DRAFT` → `PENDING_VERIFICATION` → `VERIFIED` → `PARTIALLY_DISPENSED` → `FULLY_DISPENSED`).
+- **Clinical Verification & Controlled Substances**: Pharmacist verification workflow enforcing doctor license rules for Narcotics and Class A/B Controlled drugs.
+- **Pharmacy Dispensing & FEFO Batch Allocation**: `PrescriptionDispense` (`DISP-YYYY-XXXXXX`) executing dispensing events with FEFO batch selection.
+- **Authoritative Stock Deduction**: Physical stock reduction executed strictly through `StockMovementEngine` (`SALE` movement type) inside `@transaction.atomic` blocks with pessimistic row locking. Zero direct inventory mutations.
+- **Dispensing Reversals & Refill Balances**: Reversal workflow restoring stock via compensating `SALE_RETURN` movements and updating refill balances.
+- **REST APIs & Clinical Statistics**: Published endpoints under `/api/v1/prescriptions/` and `/api/v1/dispensations/` (`/verify/`, `/dispense/`, `/reverse/`, `/statistics/`).
+
+### Enterprise Customer Accounts Receivable (AR) (`apps.accounts_receivable` / `IMP-028`)
+- **AR Subledger Engine**: `CustomerReceivable` (`AR-YYYY-XXXXXX`) tracking individual customer financial obligations created by POS sales, credit sales, or manual entries.
+- **Credit Sales & Credit Limit Checks**: Integrates with POS sales without duplicating sales invoices. Enforces customer credit limit rules and tracks customer debt balance (`customer.current_balance`).
+- **Customer Payments & Multi-Receivable Allocations**: `CustomerPayment` (`CPY-YYYY-XXXXXX`) and `CustomerPaymentAllocation` for cash, bank, card, and wallet payments allocated across single or multiple receivables with overpayment policies.
+- **Adjustments & Bad Debt Write-Offs**: `ReceivableAdjustment` (`ADJ-YYYY-XXXXXX`) and `ReceivableWriteOff` (`WOF-YYYY-XXXXXX`) supporting debit/credit adjustments and bad debt write-offs with separation of duties enforcement.
+- **Customer Disputes & Payment Reversals**: `ReceivableDispute` (`DSP-YYYY-XXXXXX`) for customer invoice disputes, and payment reversals restoring receivable outstanding balances and debt.
+- **AR Aging, Customer Statements & Reconciliation**: Selector engine calculating AR aging buckets (Current, 1-30, 31-60, 61-90, 90+ days), chronological customer ledger statements with running balances, and `ARReconciliationService` auditing subledger integrity.
+- **REST APIs & Subledger Statistics**: Published endpoints under `/api/v1/accounts-receivable/`, `/api/v1/customer-payments/`, `/api/v1/customer-statements/`, and `/api/v1/ar-analytics/` (`/sync/`, `/adjust/`, `/write-off/`, `/dispute/`, `/reverse/`, `/aging/`, `/reconciliation/`, `/statistics/`).
+
+### Enterprise General Ledger & Double-Entry Accounting (`apps.general_ledger` / `IMP-029`)
+- **Chart of Accounts Engine**: `ChartOfAccount` model supporting 6 account categories (`ASSET`, `LIABILITY`, `EQUITY`, `REVENUE`, `EXPENSE`, `COST_OF_GOODS_SOLD`), account hierarchy, control accounts, and automatic system seeding (1000 Assets, 1100 Cash, 1200 Bank, 1300 AR, 1400 Inventory, 2000 Liabilities, 2100 AP, 2200 Tax Payable, 3000 Equity, 4000 Revenue, 5000 COGS, 6000 Expenses).
+- **Double-Entry Posting Engine**: `JournalPostingService` validating total debits equal total credits, open fiscal accounting periods (`AccountingPeriod`), and postable accounts inside `@transaction.atomic` blocks. Zero unbalanced journals permitted.
+- **Immutable Journal Reversal Engine**: `JournalReversalService` creating compensating reversal journals without mutating posted history.
+- **Operational Integration Engine**: `GLIntegrationPostingService` creating balanced GL journals for POS sales, customer payments, supplier bills, supplier payments, and COGS inventory stock movements.
+- **Financial Statements & Reconciliation**: `GLSelector` and `GLReconciliationService` generating Trial Balance (Total Debits == Total Credits), Profit & Loss, Balance Sheet (Assets = Liabilities + Equity), and subledger audit reconciliation.
+- **REST APIs**: Published endpoints under `/api/v1/accounting/accounts/`, `/api/v1/accounting/journals/`, `/api/v1/accounting/periods/`, and `/api/v1/accounting/reports/`.
+
+### Enterprise Cash, Bank & Financial Reconciliation (`apps.cash_and_bank` / `IMP-030`)
+- **Treasury Accounts & Cash Management**: `CashAccount` and `BankAccount` models supporting GL chart of account linkage and ledger balance tracking. Integrates POS `CashRegister` and `RegisterSession`.
+- **Cashier Session Closing & Variance Engine**: `CashSessionReconciliationService` managing shift session closing, actual vs expected cash count reconciliation, and automated `CashVariance` (`CVR-YYYY-XXXXXX`) logging for shortages (-100) or overages (+100).
+- **Treasury Operations Engine**: `TreasuryOperationsService` executing Cash Deposits (`DEP-YYYY-XXXXXX`, Cash -> Bank) and Cash Withdrawals (`WTH-YYYY-XXXXXX`, Bank -> Cash) with double-entry GL journal posting via `JournalPostingService` (`Debit Bank 1200, Credit Cash 1100` / `Debit Cash 1100, Credit Bank 1200`).
+- **Bank Statement Import & Duplicate Protection**: `BankStatementImportService` importing statement lines with sha256 `import_hash` fingerprinting to prevent duplicate statement transaction imports.
+- **Financial Reconciliation & Exception Matching**: `FinancialReconciliationService` managing `BankReconciliation` (`REC-YYYY-XXXXXX`) sessions, linking statement transactions to book entries (`ReconciliationMatch`), and logging unreconciled items (`ReconciliationException`).
+- **REST APIs & Treasury Summary**: Published endpoints under `/api/v1/cash/accounts/`, `/api/v1/cash/deposits/`, `/api/v1/cash/withdrawals/`, `/api/v1/cash/transfers/`, `/api/v1/banks/accounts/`, `/api/v1/banks/transactions/`, `/api/v1/banks/reconciliations/`, and `/api/v1/financial-reconciliation/`.
+
 ---
 
 ## 3. Next Recommended Module
 
-**Module Code:** `IMP-027` — **Enterprise Prescription Management & Pharmacy Dispensing** (`apps.prescriptions`)
+**Module Code:** `IMP-031` — **Enterprise Expense & Operating Cost Management** (`apps.expenses`)
 
 ---
 
