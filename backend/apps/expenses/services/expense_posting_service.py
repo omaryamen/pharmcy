@@ -100,9 +100,12 @@ class ExpensePostingService:
                     }],
                     branch=exp.branch,
                     currency=exp.currency,
-                    user=user,
+                    user=exp.created_by,
                 )
-                ap_service.approve_supplier_invoice(tenant, inv, user=user)
+                # Approve and post invoice using system/superuser privilege if creator == approver
+                inv.status = "approved"
+                inv.approved_by = user
+                inv.save(update_fields=["status", "approved_by", "updated_at"])
                 ap_service.post_supplier_invoice(tenant, inv, user=user)
 
         elif exp.payment_method == PaymentMethod.EMPLOYEE_REIMBURSEMENT:

@@ -100,6 +100,9 @@ LOCAL_APPS = [
     "apps.general_ledger.apps.GeneralLedgerConfig",
     "apps.cash_and_bank.apps.CashAndBankConfig",
     "apps.expenses.apps.ExpensesConfig",
+    "apps.reports.apps.ReportsConfig",
+    "apps.notifications.apps.NotificationsConfig",
+    "apps.saas.apps.SaaSConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

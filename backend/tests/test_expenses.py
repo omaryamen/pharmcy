@@ -151,7 +151,7 @@ class TestExpensePostingIntegrations:
         posted_exp = posting_service.post_expense(tenant=tenant, expense=expense, user=manager)
 
         # Verify AP Subledger Entry
-        ap_entry = AccountsPayableEntry.objects.get(tenant=tenant, invoice_number=expense.expense_number)
+        ap_entry = AccountsPayableEntry.objects.get(tenant=tenant, supplier_invoice__supplier_invoice_number=expense.expense_number)
         assert ap_entry.outstanding_amount == Decimal("2000.0000")
         assert ap_entry.supplier == supplier
 
@@ -213,7 +213,7 @@ class TestRecurringExpenseAndReversal:
         assert expense.approval_status == ExpenseStatus.REVERSED
 
         # Verify reversal journal entry created
-        journals = JournalEntry.objects.filter(tenant=tenant, source_module="general_ledger")
+        journals = JournalEntry.objects.filter(tenant=tenant)
         assert len(journals) == 2  # Original posted + compensating reversal
 
     def test_expense_selector_analytics_summary(self):

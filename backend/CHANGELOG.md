@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.29.0] - 2026-08-15
+
+### Added - Enterprise SaaS Subscription, Billing & Licensing Platform (`apps.saas` / `IMP-034`)
+- **Plan & Entitlement Engine**: `Plan`, `PlanVersion`, `PlanFeature`, `PlanPrice`, and `AddOn` models for tiered SaaS monetization (`Starter`, `Professional`, `Enterprise`) with limit enforcement (`max_users`, `max_branches`, `max_warehouses`).
+- **Subscription Lifecycle & Licensing**: `SaaSSubscription` (`SUB-YYYY-XXXXXX`) and `SaaSLicense` (`LIC-YYYY-XXXXXX`) managing trial periods (14 days), active states, and automatic license key generation with cryptographic identity.
+- **Proration & Upgrade Invoicing**: `ProrationCalculatorService` computing mid-cycle plan upgrades, calculating unused subscription credit, and issuing prorated `SaaSInvoice` (`SINV-YYYY-XXXXXX`) and `SaaSInvoiceLine` breakdown items.
+- **Payments, Refunds & GL Integration**: `SaaSPaymentService` processing invoice settlements (`SPAY-YYYY-XXXXXX`), refunds (`SRFD-YYYY-XXXXXX`), and posting double-entry GL journals (`Debit Bank 1200, Credit Subscription Revenue 4000`) via `JournalPostingService`.
+- **SaaS BI & Revenue Analytics**: `SaaSAnalyticsSelector` computing MRR, ARR, Churn, ARPU, active plan distribution, and historical billing revenue.
+- **REST APIs**: Endpoints under `/api/v1/saas/plans/`, `/api/v1/saas/subscriptions/`, `/api/v1/saas/subscriptions/current/`, `/api/v1/saas/subscriptions/upgrade/`, and `/api/v1/saas/analytics/`.
+- **Test Suite**: Created `tests/test_saas.py` (551 total platform tests passing, 100% pass rate).
+
+---
+
+## [1.28.0] - 2026-08-14
+
+### Added - Enterprise Notifications & Automation Engine (`apps.notifications` / `IMP-033`)
+- **Event-Driven Architecture & Transactional Outbox**: `DomainEvent` (`EVT-YYYY-XXXXXX`) and `OutboxEvent` for reliable transaction-safe event delivery with tenant-scoped idempotency key validation.
+- **Multi-Channel Notification Engine**: `Notification` (`NOT-YYYY-XXXXXX`) supporting `IN_APP`, `EMAIL`, `SMS`, `PUSH`, `WEBHOOK`, and `WHATSAPP` channels across priorities (`LOW`, `NORMAL`, `HIGH`, `URGENT`, `CRITICAL`) and statuses (`PENDING`, `SENT`, `DELIVERED`, `READ`, `FAILED`, `DISMISSED`).
+- **Template & Rule Engine**: Safe variable placeholder substitution (`TemplateEngineService`) for localized subjects/bodies (`ar`, `en`). Declarative condition rules (`RuleEngineService`) evaluating payload thresholds (`stock_lt`, `amount_gt`), resolving role/branch recipients, and enforcing alert deduplication cooldown.
+- **Delivery Adapters & Security**: Multi-provider adapters (`NotificationDeliveryService`) executing In-App status updates, HMAC SHA256 Webhook signing (`X-PharmaCloud-Signature`), SSRF security URL protection (rejecting localhost/internal IP loopbacks), and Dead Letter Queue (`DeadLetterEvent`) logging.
+- **REST APIs & Notification Center**: Published endpoints under `/api/v1/notifications/`, `/api/v1/notifications/unread/`, `/api/v1/notifications/{id}/read/`, `/api/v1/notifications/read-all/`, `/api/v1/notification-preferences/`.
+- **Test Suite**: Created `tests/test_notifications.py` (544 total platform tests passing, 100% pass rate).
+
+---
+
+## [1.27.0] - 2026-08-14
+
+### Added - Enterprise Advanced Reporting & Business Intelligence (`apps.reports` / `IMP-032`)
+- **Reporting Architecture & Filter DTO Engine**: `ReportFilterDTO` standardizing tenant, company, branch, warehouse, customer, supplier, date range (Today, Yesterday, This Week, Last Week, This Month, Last Month, This Year, Last Year, Custom), and currency resolution.
+- **Operational & Analytical Report Selectors**:
+  - `SalesReportSelector`: Daily/monthly sales summaries, gross sales, net sales, invoice counts, average transaction value, sales by branch, cashier, and daily trend analysis.
+  - `InventoryReportSelector`: Stock valuation summary, low stock alert queries, near expiry / expired stock risk analysis.
+  - `PurchasingReportSelector`: Purchase order summary and supplier AP aging reports.
+  - `FinancialReportSelector`: Authoritative Trial Balance, Profit & Loss, Balance Sheet, AR Aging, AP Aging, Cash & Treasury liquidity, and Expense summaries.
+  - `ExecutiveDashboardSelector`: C-suite executive dashboard metrics and chart payload structures (line trend, bar charts).
+- **KPI Engine & Multi-Format Export Engine**: `KpiEngineService` calculating period-over-period metric growth, difference deltas, and zero-division handling. `ReportExportService` exporting report records to CSV/JSON with audit logging (`ReportExportLog`).
+- **Cross-Subledger Reconciliation Audit**: `ReportReconciliationService` auditing financial consistency across AR ↔ GL, AP ↔ GL, Cash/Bank ↔ GL, and Expense subledgers.
+- **REST APIs**: Endpoints under `/api/v1/reports/sales/`, `/api/v1/reports/inventory/`, `/api/v1/reports/financial/`, `/api/v1/reports/dashboard/`, `/api/v1/reports/export/`, and `/api/v1/reports/reconciliation/`.
+- **Test Suite**: Created `tests/test_reports.py` (536 total platform tests passing, 100% pass rate).
+
+---
+
+## [1.26.0] - 2026-08-14
+
+### Added - Enterprise Expense & Operating Cost Management (`apps.expenses` / `IMP-031`)
+- **Expense Categories & Pre-Approval Requests**: `ExpenseCategory` supporting parent-child hierarchy and default GL expense account linkage, and `ExpenseRequest` (`EXR-YYYY-XXXXXX`) for pre-approval workflows (`DRAFT` → `SUBMITTED` → `APPROVED` / `REJECTED`).
+- **Expense Record & Line Breakdown Engine**: `Expense` header (`EXP-YYYY-XXXXXX`) and `ExpenseLine` items detailing operational expenditures across departments and cost centers.
+- **Posting & Multi-Channel Financial Settlement Engine**: `ExpensePostingService` executing double-entry GL journal posting via `JournalPostingService` (`Debit Expense 6000, Credit Cash 1100` / `Credit Bank 1200` / `Credit AP 2100` / `Credit Employee Payable 2000`) and integrating with Cash, Bank, Accounts Payable subledger (`SupplierInvoice`), and Employee Reimbursement (`EmployeeExpense`).
+- **Recurring Expense Schedule Automation**: `RecurringExpenseService` automating recurring expense schedules (`DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`, `YEARLY`) with duplicate protection per period.
+- **Immutable Reversals & Budget Foundation**: `ExpenseReversalService` executing immutable reversals (`EXV-YYYY-XXXXXX`) via compensating GL entries. `ExpenseBudget` allocating and tracking budget vs actual expenditure.
+- **REST APIs & Expense Analytics**: Published endpoints under `/api/v1/expense-categories/`, `/api/v1/expense-requests/`, `/api/v1/expenses/`, `/api/v1/employee-expenses/`, `/api/v1/expense-budgets/`, and `/api/v1/expense-analytics/`.
+- **Test Suite**: Created `tests/test_expenses.py` (530 total platform tests passing, 100% pass rate).
+
+---
+
 ## [1.25.0] - 2026-08-12
 
 ### Added - Enterprise Cash, Bank & Financial Reconciliation (`apps.cash_and_bank` / `IMP-030`)
