@@ -12,7 +12,6 @@ import {
   DollarSign,
   TrendingUp,
   Store,
-  Users,
   Building2,
   Settings,
   Bell,
@@ -22,55 +21,41 @@ import {
   Globe,
   Sun,
   Moon,
-  ChevronRight,
   Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
-}
-
-const navItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "POS Terminal", href: "/pos", icon: ShoppingCart },
-  { title: "Prescriptions", href: "/prescriptions", icon: Pill, badge: "Rx" },
-  { title: "Inventory & Stock", href: "/inventory", icon: Package },
-  { title: "Sales & Invoices", href: "/sales", icon: FileText },
-  { title: "Purchasing & AP", href: "/purchasing", icon: DollarSign },
-  { title: "Accounting & GL", href: "/accounting", icon: TrendingUp },
-  { title: "E-Commerce", href: "/ecommerce", icon: Store },
-  { title: "Reports & BI", href: "/reports", icon: TrendingUp },
-  { title: "Super Admin", href: "/admin", icon: ShieldCheck },
-  { title: "SaaS Billing", href: "/billing", icon: CreditCard },
-  { title: "Settings", href: "/settings", icon: Settings },
-];
+import { useI18n } from "@/lib/i18n";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t, locale, toggleLocale } = useI18n();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [language, setLanguage] = useState<"en" | "ar">("en");
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle("dark");
   };
 
-  const toggleLanguage = () => {
-    const nextLang = language === "en" ? "ar" : "en";
-    setLanguage(nextLang);
-    document.documentElement.setAttribute("dir", nextLang === "ar" ? "rtl" : "ltr");
-    document.documentElement.setAttribute("lang", nextLang);
-  };
+  const navItems = [
+    { title: t("nav.dashboard"), href: "/dashboard", icon: LayoutDashboard },
+    { title: t("nav.pos"), href: "/pos", icon: ShoppingCart },
+    { title: t("nav.prescriptions"), href: "/prescriptions", icon: Pill, badge: "Rx" },
+    { title: t("nav.inventory"), href: "/inventory", icon: Package },
+    { title: t("nav.sales"), href: "/sales", icon: FileText },
+    { title: t("nav.purchasing"), href: "/purchasing", icon: DollarSign },
+    { title: t("nav.accounting"), href: "/accounting", icon: TrendingUp },
+    { title: t("nav.ecommerce"), href: "/ecommerce", icon: Store },
+    { title: t("nav.reports"), href: "/reports", icon: TrendingUp },
+    { title: t("nav.admin"), href: "/admin", icon: ShieldCheck },
+    { title: t("nav.billing"), href: "/billing", icon: CreditCard },
+    { title: t("nav.settings"), href: "/settings", icon: Settings },
+  ];
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden">
+    <div className="flex h-screen w-full bg-background overflow-hidden font-sans">
       {/* Sidebar */}
       <aside
         className={cn(
@@ -86,8 +71,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             {isSidebarOpen && (
               <div className="flex flex-col">
-                <span className="font-bold tracking-tight text-foreground text-sm">PharmaCloud</span>
-                <span className="text-xs text-muted-foreground">Enterprise ERP</span>
+                <span className="font-bold tracking-tight text-foreground text-sm">{t("nav.brand")}</span>
+                <span className="text-[11px] text-muted-foreground">{t("nav.tagline")}</span>
               </div>
             )}
           </div>
@@ -101,9 +86,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="px-4 py-3 border-b bg-muted/40 flex items-center justify-between">
             <div className="flex items-center gap-2 truncate">
               <Building2 className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs font-medium text-foreground truncate">Main Branch - Al-Amal</span>
+              <span className="text-xs font-medium text-foreground truncate">{t("nav.branch_label")}</span>
             </div>
-            <Badge variant="success" className="text-[10px] px-1.5 py-0">Online</Badge>
+            <Badge variant="success" className="text-[10px] px-1.5 py-0">{t("nav.online")}</Badge>
           </div>
         )}
 
@@ -143,8 +128,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             {isSidebarOpen && (
               <div className="flex flex-col truncate">
-                <span className="text-xs font-medium truncate">Dr. Ahmed Pharmacist</span>
-                <span className="text-[10px] text-muted-foreground">Pharmacist / Admin</span>
+                <span className="text-xs font-medium truncate">{t("nav.user_role")}</span>
+                <span className="text-[10px] text-muted-foreground">{locale === "ar" ? "صيدلي / مدير النظام" : "Pharmacist / Admin"}</span>
               </div>
             )}
           </div>
@@ -157,25 +142,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="flex h-16 items-center justify-between border-b bg-card px-6">
           <div className="flex items-center gap-4 flex-1 max-w-md">
             <div className="relative w-full">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground rtl:left-auto rtl:right-2.5" />
               <input
                 type="text"
-                placeholder="Search medicines, SKU, barcode, invoices, patients... (Ctrl+K)"
-                className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-4 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder={t("header.search_placeholder")}
+                className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-4 text-xs focus:outline-none focus:ring-1 focus:ring-primary rtl:pl-4 rtl:pr-9"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={toggleLanguage} title="Switch Language">
-              <Globe className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleLocale}
+              className="gap-2 text-xs font-medium"
+              title={t("header.toggle_lang")}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span>{locale === "ar" ? "English (EN)" : "العربية (AR)"}</span>
             </Button>
 
-            <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle Theme">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title={t("header.toggle_theme")}>
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            <Button variant="ghost" size="icon" className="relative" title="Notifications">
+            <Button variant="ghost" size="icon" className="relative" title={t("header.notifications")}>
               <Bell className="h-4 w-4" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
             </Button>

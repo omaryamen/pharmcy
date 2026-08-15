@@ -1,61 +1,76 @@
 "use client";
 
-import React from "react";
-import { Settings, Users, Shield, Building, Bell } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n";
 
 export default function SettingsPage() {
+  const { t, locale } = useI18n();
+  const [orgName, setOrgName] = useState(locale === "ar" ? "سلسلة صيدليات الأمل الحديثة" : "Al-Amal Modern Pharmacy Chain");
+  const [crNumber, setCrNumber] = useState("1010889922");
+  const [taxNumber, setTaxNumber] = useState("300998877600003");
+  const [currency, setCurrency] = useState("USD ($)");
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">System Settings & User Management</h1>
-        <p className="text-sm text-muted-foreground">Configure organization details, branch assignments, and RBAC permissions.</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("settings.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("settings.subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2 p-6 space-y-4">
-          <h3 className="text-sm font-semibold">Tenant & Pharmacy Information</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("settings.company_info")}</CardTitle>
+            <CardDescription>{locale === "ar" ? "البيانات الرسمية المطبوعة على فواتير المبيعات وسندات الصرف." : "Official organization identity rendered on tax invoices and receipts."}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-xs">
             <div className="space-y-1">
-              <label className="text-muted-foreground font-medium">Organization Name</label>
-              <Input defaultValue="Al-Amal Pharmacy Chain LLC" />
+              <label className="font-medium text-foreground">{t("settings.org_name")}</label>
+              <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-muted-foreground font-medium">Commercial Registration #</label>
-              <Input defaultValue="CR-1010884920" />
+              <label className="font-medium text-foreground">{t("settings.cr_number")}</label>
+              <Input value={crNumber} onChange={(e) => setCrNumber(e.target.value)} className="font-mono" />
             </div>
             <div className="space-y-1">
-              <label className="text-muted-foreground font-medium">Tax / VAT Number</label>
-              <Input defaultValue="30099482100003" />
+              <label className="font-medium text-foreground">{t("settings.tax_number")}</label>
+              <Input value={taxNumber} onChange={(e) => setTaxNumber(e.target.value)} className="font-mono" />
             </div>
             <div className="space-y-1">
-              <label className="text-muted-foreground font-medium">Default Currency</label>
-              <Input defaultValue="USD ($)" />
+              <label className="font-medium text-foreground">{t("settings.currency")}</label>
+              <Input value={currency} onChange={(e) => setCurrency(e.target.value)} />
             </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <Button>Save Settings</Button>
-          </div>
+          </CardContent>
+          <CardFooter className="border-t pt-4 flex justify-end">
+            <Button className="text-xs">{t("settings.save_btn")}</Button>
+          </CardFooter>
         </Card>
 
-        <Card className="p-6 space-y-4">
-          <h3 className="text-sm font-semibold">Security & RBAC Policies</h3>
-          <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-2 rounded-lg border">
-              <span>MFA Enforcement</span>
-              <span className="font-semibold text-emerald-600">Enabled</span>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("settings.security_policies")}</CardTitle>
+            <CardDescription>{locale === "ar" ? "قواعد تسجيل الدخول وسياسات انتهاء الجلسات." : "Session timeout rules and enterprise tenant policies."}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-xs">
+            <div className="p-3 rounded-lg border bg-muted/20 flex items-center justify-between">
+              <div>
+                <p className="font-semibold">{locale === "ar" ? "التحقق الثنائي الإلزامي (MFA)" : "Enforce Multi-Factor Authentication"}</p>
+                <p className="text-[11px] text-muted-foreground">{locale === "ar" ? "إلزام الصيادلة والمحاسبين برمز OTP" : "Mandatory for pharmacists and accountants"}</p>
+              </div>
+              <span className="text-emerald-600 font-bold">{locale === "ar" ? "مفعل" : "Enabled"}</span>
             </div>
-            <div className="flex items-center justify-between p-2 rounded-lg border">
-              <span>Token Rotation Policy</span>
-              <span className="font-semibold text-emerald-600">Strict</span>
+
+            <div className="p-3 rounded-lg border bg-muted/20 flex items-center justify-between">
+              <div>
+                <p className="font-semibold">{locale === "ar" ? "مهلة انتهاء الجلسة التلقائي" : "Automatic Session Inactivity Timeout"}</p>
+                <p className="text-[11px] text-muted-foreground">{locale === "ar" ? "قفل شاشة نقطة البيع بعد 15 دقيقة خمول" : "Lock POS screen after 15 mins of idle time"}</p>
+              </div>
+              <span className="font-mono font-bold">15 {locale === "ar" ? "دقيقة" : "mins"}</span>
             </div>
-            <div className="flex items-center justify-between p-2 rounded-lg border">
-              <span>Password Expiry</span>
-              <span className="font-semibold text-foreground">90 Days</span>
-            </div>
-          </div>
+          </CardContent>
         </Card>
       </div>
     </div>

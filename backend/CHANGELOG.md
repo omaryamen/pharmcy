@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.38.0] - 2026-08-15
+
+### Added - Complete Arabic-First Localization & RTL Enterprise Experience (`IMP-044`)
+- **Arabic-First Translation Engine**: Built `frontend/lib/translations/ar.ts`, `frontend/lib/translations/en.ts`, and `frontend/lib/i18n.tsx`.
+- **RTL / LTR Bidirectional Support**: Dynamically toggles `dir="rtl"` and `dir="ltr"` across all 17 frontend workspace pages.
+- **Enterprise Terminology Glossary**: Created `ARABIC_TERMINOLOGY_GLOSSARY.md`, `ARABIC_LOCALIZATION.md`, and `RTL_IMPLEMENTATION_GUIDE.md`.
+- **Frontend Verification**: Clean TypeScript check and 17/17 routes compiled in Next.js 15.
+
+---
+
 ## [1.37.0] - 2026-08-15
 
 ### Added - Local Development Run & Complete System Test (`LOCAL-TEST`)
