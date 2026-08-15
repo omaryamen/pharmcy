@@ -185,7 +185,7 @@ class TestPlatformOperationsAndMobileApiE2E:
         device = Device.objects.create(
             tenant=env["tenant"],
             user=env["pharmacist"],
-            device_uuid="DEV-IPHONE-15-PRO-MAX",
+            device_identifier="DEV-IPHONE-15-PRO-MAX",
             platform=DevicePlatform.IOS,
             app_version="1.34.0",
             os_version="iOS 18.2",
