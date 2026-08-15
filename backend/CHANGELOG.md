@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.36.0] - 2026-08-15
+
+### Added - Enterprise Production Deployment & Live Release (`IMP-041`)
+- **Unified Production Docker Stack**: Created root `docker-compose.prod.yml` coordinating PostgreSQL 16, Redis 7, Django 5 Gunicorn backend, Celery workers/beat, Next.js 15 standalone frontend, and Nginx edge proxy.
+- **Edge Reverse Proxy**: Added `nginx/nginx.prod.conf` with TLS termination, static asset caching, API proxying, and Next.js integration.
+- **Operations & Runbooks**: Added `PRODUCTION_ARCHITECTURE.md`, `PRODUCTION_DEPLOYMENT.md`, `OPERATIONS_RUNBOOK.md`, `ROLLBACK_PLAN.md`, and automated operational bash scripts (`deploy_prod.sh`, `backup_db.sh`, `restore_db.sh`).
+- **Production Verification**: Next.js 15 standalone build passing (17/17 routes); 578 / 578 backend regression tests passing (100% pass rate).
+- **Deployment Status**: READY FOR DEPLOYMENT.
+
+---
+
 ## [1.35.0] - 2026-08-15
 
 ### Added - Enterprise Final Integration, E2E Validation & Production Launch Readiness (`IMP-040`)
