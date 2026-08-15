@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.37.0] - 2026-08-15
+
+### Added - Local Development Run & Complete System Test (`LOCAL-TEST`)
+- **Local Runtime Validation**: Verified Django 5.2.17 backend, Python 3.10 virtual environment, and Next.js 15.1.7 standalone frontend.
+- **System Checks & Migrations**: Verified 0 Django system errors and 0 pending migration drift.
+- **Documentation**: Generated `LOCAL_DEVELOPMENT.md` and `LOCAL_TEST_REPORT.md`.
+- **Test Suite**: 578 / 578 backend tests passing (100% pass rate); 17/17 frontend routes compiled.
+- **Status**: LOCAL TEST PASSED.
+
+---
+
 ## [1.36.0] - 2026-08-15
 
 ### Added - Enterprise Production Deployment & Live Release (`IMP-041`)
