@@ -103,6 +103,9 @@ LOCAL_APPS = [
     "apps.reports.apps.ReportsConfig",
     "apps.notifications.apps.NotificationsConfig",
     "apps.saas.apps.SaaSConfig",
+    "apps.platform_ops.apps.PlatformOpsConfig",
+    "apps.commerce.apps.CommerceConfig",
+    "apps.mobile_api.apps.MobileApiConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -122,6 +125,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # PharmaCloud custom middleware
+    "apps.common.middleware.security_headers.SecurityHeadersMiddleware",
     "apps.common.middleware.request_context.RequestContextMiddleware",
     "apps.common.middleware.tenant.TenantIdentificationMiddleware",
     "apps.rbac.middleware.PermissionContextMiddleware",
