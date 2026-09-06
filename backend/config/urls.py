@@ -91,3 +91,8 @@ handler500 = "config.urls.api_500"
 if settings.DEBUG:
     # Serve uploaded media during development only.
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    if "debug_toolbar" in settings.INSTALLED_APPS:
+        import debug_toolbar
+
+        urlpatterns.append(path("__debug__/", include(debug_toolbar.urls)))
+

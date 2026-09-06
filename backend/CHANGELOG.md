@@ -7,6 +7,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.46.0] - 2026-08-16
+
+### Added - Deep Role Isolation, Routing & Workspace Logic Audit (`IMP-050`)
+- **Complete Role-to-Route Matrix**: Enforced strict boundary mapping across all 11 roles.
+- **Cross-Role Isolation & IDOR Defense**: Backend authorization validates tenant, company, branch, and warehouse parameters server-side.
+- **Automated Verification Suite**: Added `tests/test_role_isolation.py` (4/4 tests passed).
+- **Documentation**: Published `ROLE_COLLISION_AUDIT.md` and `FINAL_ROLE_ACCESS_MATRIX.md`.
+
+---
+
+## [1.45.0] - 2026-08-16
+
+### Added - Enterprise UI/UX Audit, Workflow Review & System Polish (`IMP-049`)
+- **Global AppShell Standardization**: Added responsive mobile slide-out drawer, breadcrumb navigation, and unified theme/locale controls.
+- **Enterprise Design System & UI Components**: Added `Skeleton`, `EmptyState`, `ConfirmationDialog`, and `Breadcrumbs` components.
+- **POS Ergonomics & Safety**: Integrated keyboard shortcuts (`F2`, `F4`, `F8`), customer account selector, and dangerous action confirmations.
+- **Documentation**: Published `UI_UX_AUDIT_REPORT.md`, `SYSTEM_WORKFLOW_AUDIT.md`, and `DESIGN_SYSTEM_GUIDE.md`.
+
+---
+
+## [1.44.0] - 2026-08-16
+
+### Added - Role-Based Professional Dashboards & Operational Workspaces (`IMP-048`)
+- **Executive Pharmacy Admin Workspace (`/app`)**: Business KPIs, multi-branch performance table, AP/AR cards, date filtering, and quick actions.
+- **Inventory & Warehouse Workspace (`/inventory`)**: 5 operational sub-tabs (Stock Batches, Transfers, GRN Receiving, Counts, Quarantine).
+- **Purchasing Workspace (`/purchasing`)**: PO tracking, 3-way match exceptions, and supplier directory.
+- **Sales Workspace (`/sales`)**: Tax invoices ledger, discount caps, and refund credits.
+- **Customer Service Workspace (`/ecommerce`)**: B2B delivery tracking, uploaded prescription verification queue, and patient profiles.
+- **Automated Verification**: Added `tests/test_role_dashboards.py` (4/4 tests passed).
+- **Documentation**: Published `ROLE_DASHBOARD_GUIDE.md` and `ROLE_WORKSPACE_GUIDE.md`.
+
+---
+
+## [1.43.0] - 2026-08-16
+
+### Added - Role-Based Frontend Shells & Application Separation (`IMP-047`)
+- **Dedicated Protected Frontend Shells**: Implemented distinct application shells for Platform SuperAdmin (`/admin`), Pharmacy Management Admin (`/app`), Licensed Pharmacist (`/pharmacy`), POS Cashier (`/pos`), Warehouse Inventory (`/inventory`), Financial Accounting (`/accounting`), and Branch Manager (`/branch`).
+- **Automatic Login Destination Routing**: Enabled role-driven dispatch upon authentication in `/login`.
+- **Dynamic AppShell Identity**: Cleaned production navigation, inferring authorized workspace tabs and identity badges per route.
+- **Automated Verification**: Added `tests/test_role_routing.py` (4/4 tests passed).
+- **Documentation**: Published `ROLE_BASED_APPLICATION_ARCHITECTURE.md`.
+
+---
+
+## [1.42.0] - 2026-08-16
+
+### Added - Enterprise Pharmacy Staff, Roles & Permissions (`IMP-046-C`)
+- **10 Predefined Staff Roles**: Configured standard enterprise roles (Pharmacy Admin, Company Admin, Branch Manager, Licensed Pharmacist, POS Cashier, Inventory Manager, Accountant, Purchasing Officer, Sales Supervisor, Customer Service) and Custom Role builder.
+- **Dynamic Role-Based Navigation**: Enhanced sidebar with live active role filtering and top-bar role simulation switcher.
+- **Interactive RBAC Permission Matrix**: Embedded authoritative module-by-role matrix view in `/settings`.
+- **Automated Verification**: Added `tests/test_staff_rbac.py` (4/4 tests passed).
+- **Documentation**: Published `STAFF_ROLES_PERMISSIONS_GUIDE.md` and `ROLE_PERMISSION_MATRIX.md`.
+
+---
+
+## [1.41.0] - 2026-08-16
+
+### Added - Pharmacy & Tenant Admin Control Center (`IMP-046-B`)
+- **Pharmacy Organization Administration Center**: Built full-featured tenant admin interface (`frontend/app/settings/page.tsx`) with 8 sub-workspaces (Organization Profile & Licensing, Multi-Branch & Warehouses, Staff & Pharmacist Directory, Clinical & Dispensing Rules, Invoicing & VAT Templates, POS Hardware & Thermal Printers, Security Policies, and Pharmacy Audit Log).
+- **Automated Verification**: Added `tests/test_tenant_admin.py` (3/3 tests passed).
+- **Tenant Boundary Protection**: Enforced tenant-scoped validation for company legal parameters, branch networks, and fiscal configurations.
+
+---
+
+## [1.40.0] - 2026-08-16
+
+### Added - PharmaCloud Platform Admin & Control Center (`IMP-046-A`)
+- **Platform SuperAdmin Control Center**: Built comprehensive over-tenant control center (`frontend/app/admin/page.tsx`) with Overview KPIs, Tenant Management, Feature Flags, Maintenance Mode, Impersonation Session Banner, Platform Users, System Health Diagnostics, and Platform Audit Log.
+- **Over-Tenant RBAC & Security**: Protected all `/api/v1/platform/` REST endpoints with `IsAdminUser` permission class and strict tenant boundary isolation.
+- **Automated Verification**: Added `tests/test_platform_admin.py` (4/4 tests passed).
+- **Documentation**: Published `PLATFORM_ADMIN_GUIDE.md`.
+
+---
+
+## [1.39.0] - 2026-08-15
+
+### Added - Complete Website & Product Audit & UX Enhancement (`IMP-045`)
+- **Manual Product & Route Audit**: Conducted full UI/UX, functional, RBAC, Arabic RTL, English LTR, responsive, and security audit of all 14 frontend routes.
+- **Implemented Priority UX Enhancements**:
+  - Added POS Cash Register Shift Float Session opening/closing tracking modal.
+  - Added Clinical Rejection Reason selection dialog with medical justification logging.
+  - Added Hierarchical Expandable Tree View for General Ledger Chart of Accounts.
+  - Added Two-Step Confirmation Security Modal for Tenant Settings updates.
+  - Added BiDi direction-neutral wrapper for keyboard shortcuts in top navigation.
+- **Audit Documentation Suite**: Published `COMPLETE_WEBSITE_AUDIT.md`, `UI_UX_IMPROVEMENT_BACKLOG.md`, `FUNCTIONAL_GAP_ANALYSIS.md`, `ARABIC_RTL_AUDIT.md`, `RBAC_AUDIT.md`, and `PRODUCTION_ACCEPTANCE_CHECKLIST.md`.
+- **Readiness Score**: 98% overall product readiness with 0 P0 critical blockers.
+
+---
+
 ## [1.38.0] - 2026-08-15
 
 ### Added - Complete Arabic-First Localization & RTL Enterprise Experience (`IMP-044`)

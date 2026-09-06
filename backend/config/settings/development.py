@@ -37,3 +37,12 @@ SPECTACULAR_SETTINGS = {
     **SPECTACULAR_SETTINGS,
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
 }
+
+# Local in-memory cache for dev if Redis is not running
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "pharmacloud-dev-cache",
+    }
+}
+

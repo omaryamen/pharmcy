@@ -258,11 +258,31 @@ PROTECTED_ROLE_CODES: tuple[str, ...] = ("admin",)
 #: Roles a newly created member receives by default (tenant bootstrap).
 DEFAULT_ROLE_CODES: tuple[str, ...] = ("member",)
 
-#: Role the tenant bootstrap provisions as the top administrative role.
+#: Predefined Enterprise Staff Roles
 ADMIN_ROLE_CODE: str = "admin"
-
-#: Role the tenant bootstrap provisions for ordinary members.
+COMPANY_ADMIN_ROLE_CODE: str = "company_admin"
+BRANCH_MANAGER_ROLE_CODE: str = "branch_manager"
+PHARMACIST_ROLE_CODE: str = "pharmacist"
+CASHIER_ROLE_CODE: str = "cashier"
+INVENTORY_MANAGER_ROLE_CODE: str = "inventory_manager"
+ACCOUNTANT_ROLE_CODE: str = "accountant"
+PURCHASING_OFFICER_ROLE_CODE: str = "purchasing_officer"
+SALES_SUPERVISOR_ROLE_CODE: str = "sales_supervisor"
+CUSTOMER_SERVICE_ROLE_CODE: str = "customer_service"
 MEMBER_ROLE_CODE: str = "member"
+
+PREDEFINED_STAFF_ROLES: list[dict[str, str]] = [
+    {"code": ADMIN_ROLE_CODE, "name": "Pharmacy Admin / Owner", "description": "Full tenant-level administration and operations."},
+    {"code": COMPANY_ADMIN_ROLE_CODE, "name": "Company Admin", "description": "Company-wide operational governance and supervision."},
+    {"code": BRANCH_MANAGER_ROLE_CODE, "name": "Branch Manager", "description": "Branch-scoped operations, POS supervision, staff and stock management."},
+    {"code": PHARMACIST_ROLE_CODE, "name": "Licensed Pharmacist", "description": "Prescriptions review, clinical dispensing, and medicine management."},
+    {"code": CASHIER_ROLE_CODE, "name": "POS Cashier", "description": "POS checkout, cash sessions, returns and receipts."},
+    {"code": INVENTORY_MANAGER_ROLE_CODE, "name": "Inventory & Warehouse Manager", "description": "Warehouses, batches, stock movements, and counts."},
+    {"code": ACCOUNTANT_ROLE_CODE, "name": "Accountant", "description": "General ledger, AP, AR, cash & bank reconciliation."},
+    {"code": PURCHASING_OFFICER_ROLE_CODE, "name": "Purchasing Officer", "description": "Purchase orders, suppliers, and goods receiving."},
+    {"code": SALES_SUPERVISOR_ROLE_CODE, "name": "Sales Supervisor", "description": "Sales management, customer discounts, and POS oversight."},
+    {"code": CUSTOMER_SERVICE_ROLE_CODE, "name": "Customer Service", "description": "Customer profiles, orders, and inquiries."},
+]
 
 #: Stable code constants — business logic references these, never raw strings.
 RBAC_PERMISSIONS: dict[str, str] = {
